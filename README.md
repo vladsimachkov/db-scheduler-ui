@@ -109,6 +109,67 @@ for full attribution.
 > **Migrating from `io.rocketbase.extension:db-scheduler-log-spring-boot-starter`:**
 > remove that dependency and rename `db-scheduler-log.*` properties to `db-scheduler-ui.log.*`.
 
+## SQL-задания (планировщик для баз данных)
+
+Модуль `db-scheduler-ui-sql` позволяет создавать из интерфейса задания, которые подключаются
+к другой базе данных и выполняют SQL-скрипт по cron-расписанию (или один раз). Целевые СУБД:
+Oracle, Trino, Impala — и любая другая по JDBC. Хранилище планировщика и целевая база
+разделены: задания живут в `scheduled_tasks` вашего приложения, скрипты выполняются в целевой базе.
+
+1. Добавьте зависимость:
+
+   ```xml
+   <dependency>
+     <groupId>no.bekk.db-scheduler-ui</groupId>
+     <artifactId>db-scheduler-ui-sql</artifactId>
+   </dependency>
+   ```
+
+2. Создайте таблицы `sql_job_connections` и `sql_job_executions` — скрипты для 5 диалектов в
+   [`sql/sql-jobs/`](sql/sql-jobs):
+   [postgresql](sql/sql-jobs/postgresql.sql) ·
+   [h2](sql/sql-jobs/h2.sql) ·
+   [oracle](sql/sql-jobs/oracle.sql) ·
+   [mysql](sql/sql-jobs/mysql.sql) ·
+   [mssql](sql/sql-jobs/mssql.sql).
+
+3. Включите модуль и задайте ключ шифрования паролей соединений:
+
+   ```properties
+   db-scheduler-ui.sql=true
+   # AES-GCM ключ (base64, 32 байта); без него пароли хранятся в открытом виде (с предупреждением)
+   db-scheduler-ui.sql.encryption-key=${SQL_JOBS_ENCRYPTION_KEY}
+   ```
+
+4. **JDBC-драйвер целевой базы — «принесите сами»** (не входит в сборку из-за лицензии Oracle
+   и веса hive-jdbc). Добавьте драйвер в classpath вашего приложения, например:
+
+   ```xml
+   <!-- Oracle -->
+   <dependency>
+     <groupId>com.oracle.database.jdbc</groupId>
+     <artifactId>ojdbc11</artifactId>
+     <version>23.x</version>
+   </dependency>
+   <!-- Trino -->
+   <dependency>
+     <groupId>io.trino</groupId>
+     <artifactId>trino-jdbc</artifactId>
+     <version>4xx</version>
+   </dependency>
+   <!-- Impala: Cloudera hive-jdbc — установите в локальный репозиторий вручную -->
+   ```
+
+   Класс драйвера определяется по префиксу JDBC URL (`DriverManager`), указывать его не нужно.
+
+5. В интерфейсе: вкладка **«Соединения»** → создать соединение (guided-форма собирает JDBC URL
+   из host/port/database; кнопка «Проверить» доступна у сохранённого соединения — через
+   «Редактировать») → вкладка **«SQL-задания»** → создать задание (соединение, скрипт, cron
+   с предпросмотром ближайших запусков, таймаут на оператор). История выполнений — со списком
+   операторов, строками и ошибками.
+
+Подробности и известные ограничения — в [`docs/АРХИТЕКТУРА.md`](docs/АРХИТЕКТУРА.md), раздел 8.
+
 ## How it works
 
 db-scheduler-ui adds a REST-api package that has a bundled frontend application.
