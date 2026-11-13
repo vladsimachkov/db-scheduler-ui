@@ -23,8 +23,10 @@ import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import java.time.Instant;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
+@Profile("demo")
 public class ChainTask {
 
   public static final TaskDescriptor<Order> ORDER_CAPTURE_PAYMENT =

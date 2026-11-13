@@ -31,6 +31,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Keeps the dashboard alive for demos. Every tick it schedules a few one-time instances at small
@@ -41,6 +42,7 @@ import org.springframework.context.annotation.Configuration;
  * up in the UI it is meant to populate.
  */
 @Configuration
+@Profile("demo")
 public class DemoTrafficSimulatorTask {
 
   public static final TaskDescriptor<Void> SIMULATE_TRAFFIC = TaskDescriptor.of("simulate-traffic");

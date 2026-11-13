@@ -26,8 +26,10 @@ import java.time.LocalDate;
 import java.util.Random;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
+@Profile("demo")
 public class SpawnerTask {
 
   public static final TaskDescriptor<Void> ENQUEUE_DAILY_NEWSLETTER_BATCH =

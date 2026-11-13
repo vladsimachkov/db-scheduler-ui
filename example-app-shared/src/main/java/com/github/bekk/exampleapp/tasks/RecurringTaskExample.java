@@ -22,8 +22,10 @@ import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
 import java.util.Random;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
+@Profile("demo")
 public class RecurringTaskExample {
 
   public static final TaskDescriptor<Void> SYNC_STRIPE_PAYMENT_STATUS =

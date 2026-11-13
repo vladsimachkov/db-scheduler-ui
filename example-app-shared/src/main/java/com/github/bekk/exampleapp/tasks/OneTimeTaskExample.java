@@ -19,8 +19,10 @@ import com.github.kagkarlsson.scheduler.task.TaskDescriptor;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 @Configuration
+@Profile("demo")
 public class OneTimeTaskExample {
 
   public static final TaskDescriptor<NewSignup> SEND_WELCOME_EMAIL =

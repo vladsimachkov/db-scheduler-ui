@@ -19,9 +19,11 @@ import com.github.kagkarlsson.scheduler.task.helper.RecurringTaskWithPersistentS
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import utils.Utils;
 
 @Configuration
+@Profile("demo")
 public class DynamicRecurringTaskExample {
 
   public static final TaskDescriptor<TaskScheduleAndNoData> CUSTOMER_SCHEDULED_REPORT =
