@@ -14,8 +14,8 @@
 import React from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { sql } from '@codemirror/lang-sql';
-import { Box } from '@chakra-ui/react';
-import colors from 'src/styles/colors';
+import { oneDark } from '@codemirror/theme-one-dark';
+import { Box, useColorMode } from '@chakra-ui/react';
 
 interface ScriptEditorProps {
   value: string;
@@ -29,27 +29,31 @@ const ScriptEditor: React.FC<ScriptEditorProps> = ({
   onChange,
   placeholder,
   height = '280px',
-}) => (
-  <Box
-    borderWidth={1}
-    borderColor={colors.primary[300]}
-    borderRadius={4}
-    overflow={'hidden'}
-    fontSize={'sm'}
-  >
-    <CodeMirror
-      value={value}
-      height={height}
-      extensions={[sql()]}
-      placeholder={placeholder}
-      onChange={onChange}
-      basicSetup={{
-        lineNumbers: true,
-        foldGutter: false,
-        highlightActiveLine: false,
-      }}
-    />
-  </Box>
-);
+}) => {
+  const { colorMode } = useColorMode();
+  return (
+    <Box
+      borderWidth={1}
+      borderColor="border"
+      borderRadius={4}
+      overflow={'hidden'}
+      fontSize={'sm'}
+    >
+      <CodeMirror
+        value={value}
+        height={height}
+        theme={colorMode === 'dark' ? oneDark : 'light'}
+        extensions={[sql()]}
+        placeholder={placeholder}
+        onChange={onChange}
+        basicSetup={{
+          lineNumbers: true,
+          foldGutter: false,
+          highlightActiveLine: false,
+        }}
+      />
+    </Box>
+  );
+};
 
 export default ScriptEditor;
