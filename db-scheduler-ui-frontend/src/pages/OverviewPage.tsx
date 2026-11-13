@@ -31,7 +31,6 @@ import {
   getOverviewTasks,
   OVERVIEW_TASKS_QUERY_KEY,
 } from 'src/services/getOverviewTasks';
-import colors from 'src/styles/colors';
 import { dateFormatText } from 'src/utils/dateFormatText';
 import { useOverviewFilters } from 'src/hooks/useOverviewFilters';
 import { applyOverviewFilters } from 'src/utils/overviewFilters';
@@ -49,13 +48,13 @@ const statusText = (status: OverviewTaskStatus): string =>
   i18n.t(`overview:status.${status.toLowerCase()}`);
 
 const statusColors: Record<OverviewTaskStatus, string> = {
-  FAILING: colors.failed['200'],
-  RUNNING: colors.running['300'],
-  SCHEDULED: colors.success['200'],
-  DORMANT: colors.primary['400'],
+  FAILING: 'failed',
+  RUNNING: 'running',
+  SCHEDULED: 'success',
+  DORMANT: 'textMuted',
 };
 
-const overdueColor = '#725200';
+const overdueColor = 'overdue';
 
 export const OverviewPage: React.FC = () => {
   const { t } = useTranslation();
@@ -73,7 +72,7 @@ export const OverviewPage: React.FC = () => {
   return (
     <Box>
       <Stack spacing={4} pt={10} pb={2}>
-        <Heading as="h1" size="lg" color={colors.primary['600']}>
+        <Heading as="h1" size="lg" color="textHeading">
           {t('overview:title')}
         </Heading>
         {loaded && (
@@ -118,10 +117,10 @@ const columnLabelSx = {
   letterSpacing: 'wider',
   fontSize: 'xs',
   fontWeight: 'bold',
-  color: colors.primary['400'],
+  color: 'textMuted',
   border: 'none',
   borderBottom: '1px solid',
-  borderBottomColor: colors.primary['300'],
+  borderBottomColor: 'border',
   pt: 1,
   pb: 2,
 };
@@ -166,7 +165,7 @@ const OverviewRow: React.FC<{ task: OverviewTask }> = ({ task }) => {
           <TaskTypeIcon task={task} />
           <Box minW={0}>
             <Text fontWeight="bold">{task.taskName}</Text>
-            <Box color={colors.primary['400']} fontSize="sm">
+            <Box color="textMuted" fontSize="sm">
               {subLine(task)}
             </Box>
           </Box>
@@ -177,7 +176,7 @@ const OverviewRow: React.FC<{ task: OverviewTask }> = ({ task }) => {
           <ProximityDot task={task} />
           <Text
             title={absoluteTitle(task.nextExecutionTime)}
-            color={isOverdue(task) ? overdueColor : colors.primary['500']}
+            color={isOverdue(task) ? overdueColor : 'textSecondary'}
             fontWeight={
               isOverdue(task) || task.counts.running > 0 ? 'semibold' : 'normal'
             }
@@ -204,7 +203,7 @@ const TaskTypeIcon: React.FC<{ task: OverviewTask }> = ({ task }) =>
       display="flex"
       alignItems="center"
       flexShrink={0}
-      color={colors.primary['400']}
+      color="textMuted"
     >
       <RepeatIcon boxSize={5} />
     </Box>
@@ -220,7 +219,7 @@ const ProximityDot: React.FC<{ task: OverviewTask }> = ({ task }) => {
   return (
     <Box
       aria-hidden="true"
-      bgColor={colors.primary['600']}
+      bgColor="textHeading"
       borderRadius="50%"
       flexShrink={0}
       height="0.5rem"
@@ -233,7 +232,7 @@ const ProximityDot: React.FC<{ task: OverviewTask }> = ({ task }) => {
 const MessageRow: React.FC<{ message: string }> = ({ message }) => (
   <Tr>
     <Td colSpan={3}>
-      <Text color={colors.primary['400']}>{message}</Text>
+      <Text color="textMuted">{message}</Text>
     </Td>
   </Tr>
 );
@@ -267,21 +266,9 @@ function subLine(task: OverviewTask) {
     return (
       <HStack spacing={1} flexWrap="wrap">
         <Text as="span">{instancesText(task.instanceCount)}</Text>
-        {countPart(
-          task.counts.failing,
-          statusText('FAILING'),
-          colors.failed['200'],
-        )}
-        {countPart(
-          task.counts.running,
-          statusText('RUNNING'),
-          colors.running['300'],
-        )}
-        {countPart(
-          task.counts.scheduled,
-          statusText('SCHEDULED'),
-          colors.primary['500'],
-        )}
+        {countPart(task.counts.failing, statusText('FAILING'), 'failed')}
+        {countPart(task.counts.running, statusText('RUNNING'), 'running')}
+        {countPart(task.counts.scheduled, statusText('SCHEDULED'), 'textSecondary')}
       </HStack>
     );
   }
@@ -351,14 +338,14 @@ function nextRunText(task: OverviewTask): string {
 
 function lastRunText(task: OverviewTask) {
   if (task.worstStatus === 'DORMANT') {
-    return <Text color={colors.primary['400']}>-</Text>;
+    return <Text color="textMuted">-</Text>;
   }
 
   const lastSuccess = parseDate(task.lastSuccess);
   const lastFailure = parseDate(task.lastFailure);
 
   if (!lastSuccess && !lastFailure) {
-    return <Text color={colors.primary['400']}>-</Text>;
+    return <Text color="textMuted">-</Text>;
   }
 
   const lastWasFailure =
@@ -366,13 +353,13 @@ function lastRunText(task: OverviewTask) {
   const date = lastWasFailure ? lastFailure : lastSuccess;
 
   if (!date) {
-    return <Text color={colors.primary['400']}>-</Text>;
+    return <Text color="textMuted">-</Text>;
   }
 
   return (
     <Text
       title={dateFormatText(date)}
-      color={lastWasFailure ? colors.failed['200'] : colors.success['200']}
+      color={lastWasFailure ? 'failed' : 'success'}
       fontWeight={lastWasFailure ? 'semibold' : 'normal'}
     >
       {lastWasFailure
@@ -417,51 +404,51 @@ function countPart(count: number, label: string, color: string) {
   );
 }
 
-function rowBackground(task: OverviewTask): string | undefined {
+function rowBackground(task: OverviewTask): string {
   if (task.worstStatus === 'FAILING') {
-    return '#fcf3f3';
+    return 'rowFailedBg';
   }
   if (task.worstStatus === 'RUNNING') {
-    return '#f6f8fd';
+    return 'rowRunningBg';
   }
   if (task.worstStatus === 'DORMANT') {
-    return '#f8f9fa';
+    return 'rowDormantBg';
   }
-  return colors.primary['100'];
+  return 'surface';
 }
 
 function rowHoverBackground(task: OverviewTask): string {
   if (task.worstStatus === 'FAILING') {
-    return '#f7e8e8';
+    return 'rowFailedHover';
   }
   if (task.worstStatus === 'RUNNING') {
-    return '#eef2fc';
+    return 'rowRunningHover';
   }
   if (task.worstStatus === 'DORMANT') {
-    return '#f1f2f3';
+    return 'rowDormantHover';
   }
-  return colors.primary['200'];
+  return 'surfaceSubtle';
 }
 
 function rowBorderColor(task: OverviewTask): string {
   if (task.worstStatus === 'FAILING') {
-    return '#f3dede';
+    return 'rowFailedBorder';
   }
   if (task.worstStatus === 'RUNNING') {
-    return '#e7edf9';
+    return 'rowRunningBorder';
   }
   if (task.worstStatus === 'DORMANT') {
-    return '#eceef0';
+    return 'rowDormantBorder';
   }
-  return colors.primary['300'];
+  return 'border';
 }
 
 function dotColor(status: OverviewTaskStatus): string {
   if (status === 'DORMANT') {
-    return '#cfd6dc';
+    return 'dotDormant';
   }
   if (status === 'SCHEDULED') {
-    return colors.primary['400'];
+    return 'textMuted';
   }
   return statusColors[status];
 }

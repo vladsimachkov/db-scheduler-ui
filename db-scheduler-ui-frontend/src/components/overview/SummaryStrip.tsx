@@ -19,7 +19,6 @@ import {
   OverviewStat,
   OverviewSummary,
 } from 'src/utils/overviewSummary';
-import colors from 'src/styles/colors';
 
 interface SummaryStripProps {
   summary: OverviewSummary;
@@ -37,9 +36,9 @@ interface FilterCard {
 }
 
 const filterCardTones: Record<OverviewFilterKey, string> = {
-  failing: colors.failed['200'],
-  running: colors.running['300'],
-  scheduled: colors.primary['600'],
+  failing: 'failed',
+  running: 'running',
+  scheduled: 'textHeading',
 };
 
 /**
@@ -72,7 +71,7 @@ export const SummaryStrip: React.FC<SummaryStripProps> = ({
           <StatCard
             stat={summary.all}
             label={t('overview:strip.tasks')}
-            tone={colors.primary['600']}
+            tone="textHeading"
             hint={t('overview:strip.hintTasks')}
             active={activeFilters.length === 0}
             onSelect={onClearFilters}
@@ -92,7 +91,7 @@ export const SummaryStrip: React.FC<SummaryStripProps> = ({
         ))}
       </Wrap>
       {activeFilters.length > 0 && (
-        <Text fontSize="sm" color={colors.primary['400']}>
+        <Text fontSize="sm" color="textMuted">
           {t('overview:strip.showing', {
             shown: shownCount,
             count: summary.all.tasks,
@@ -121,7 +120,7 @@ const StatCard: React.FC<StatCardProps> = ({
   onSelect,
 }) => {
   // Zero is calm, not alarming: the alert colour is reserved for something to act on.
-  const valueColor = stat.tasks > 0 ? tone : colors.primary['400'];
+  const valueColor = stat.tasks > 0 ? tone : 'textMuted';
   // Selecting a stat that matches no task could only empty the table, so it is inert then
   // — unless it is the current selection, which must stay clickable to switch off.
   const selectable = stat.tasks > 0 || active;
@@ -129,12 +128,15 @@ const StatCard: React.FC<StatCardProps> = ({
   return (
     <Box
       minW="8.5rem"
-      bgColor={colors.primary['100']}
+      bgColor="surface"
       border="1px solid"
       // The outline follows the stat's own colour, not the muted zero shade: a filter that
       // has been switched on must look switched on even once its count drops to zero.
-      borderColor={active ? tone : colors.primary['300']}
-      boxShadow={active ? `inset 0 0 0 1px ${tone}` : undefined}
+      // boxShadow is raw CSS, so the token is referenced through its CSS variable.
+      borderColor={active ? tone : 'border'}
+      boxShadow={
+        active ? `inset 0 0 0 1px var(--chakra-colors-${tone})` : undefined
+      }
       borderRadius="8px"
       px={4}
       py={3}
@@ -164,13 +166,13 @@ const StatCard: React.FC<StatCardProps> = ({
         fontWeight="bold"
         textTransform="uppercase"
         letterSpacing="wider"
-        color={active ? tone : colors.primary['400']}
+        color={active ? tone : 'textMuted'}
       >
         {label}
       </Text>
       {/* The instance total behind the task count: "4 failing" is 4 rows, but it may be
           hundreds of executions, and that difference is the whole story on a group task. */}
-      <Text fontSize="xs" color={colors.primary['400']} minH="1rem">
+      <Text fontSize="xs" color="textMuted" minH="1rem">
         {stat.instances > 0 && `· ${instancesText(stat.instances)}`}
       </Text>
     </Box>
