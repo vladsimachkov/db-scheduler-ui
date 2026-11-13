@@ -29,7 +29,6 @@ import {
   ModalHeader,
   ModalOverlay,
   Select,
-  Switch,
   Text,
   useToast,
   VStack,
@@ -39,10 +38,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import {
-  buildJdbcUrl,
   connectionFormSchema,
   ConnectionFormValues,
-  DEFAULT_PORTS,
   formErrorText,
 } from 'src/components/sql/formSchemas';
 import {
@@ -69,11 +66,6 @@ function defaultValuesFor(initial?: SqlConnection): ConnectionFormValues {
   return {
     name: initial?.name ?? '',
     dialect: initial?.dialect ?? 'ORACLE',
-    // Editing an existing connection starts from its stored URL; guided mode is for new ones.
-    guided: !initial,
-    host: '',
-    port: DEFAULT_PORTS[initial?.dialect ?? 'ORACLE'],
-    database: '',
     jdbcUrl: initial?.jdbcUrl ?? '',
     driverClass: initial?.driverClass ?? '',
     username: initial?.username ?? '',
@@ -106,7 +98,6 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     handleSubmit,
     control,
     watch,
-    setValue,
     reset,
     formState: { errors },
   } = useForm<ConnectionFormValues>({
@@ -127,9 +118,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   }, [isOpen, initial?.id]);
 
   const values = watch();
-  const guided = values.guided && values.dialect !== 'GENERIC';
   const clearPassword = values.clearPassword;
-  const urlPreview = guided ? buildJdbcUrl(values) : values.jdbcUrl.trim();
 
   const save = useMutation({
     mutationFn: (payload: SqlConnectionRequest) =>
@@ -173,9 +162,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     save.mutate({
       name: formValues.name.trim(),
       dialect: formValues.dialect,
-      jdbcUrl: guided
-        ? buildJdbcUrl(formValues)
-        : formValues.jdbcUrl.trim(),
+      jdbcUrl: formValues.jdbcUrl.trim(),
       driverClass: formValues.driverClass.trim() || undefined,
       username: formValues.username.trim() || undefined,
       // clearPassword wins on the backend, so never send a password alongside it
@@ -213,15 +200,9 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                     render={({ field }) => (
                       <Select
                         value={field.value}
-                        onChange={(event) => {
-                          const dialect = event.target.value as SqlDialect;
-                          field.onChange(dialect);
-                          if (dialect === 'GENERIC') {
-                            setValue('guided', false);
-                          } else {
-                            setValue('port', DEFAULT_PORTS[dialect]);
-                          }
-                        }}
+                        onChange={(event) =>
+                          field.onChange(event.target.value as SqlDialect)
+                        }
                       >
                         {DIALECTS.map((dialect) => (
                           <option key={dialect} value={dialect}>
@@ -238,69 +219,15 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 </FormControl>
               </HStack>
 
-              {values.dialect !== 'GENERIC' && (
-                <HStack>
-                  <Switch
-                    id="guided-mode"
-                    isChecked={guided}
-                    onChange={(event) =>
-                      setValue('guided', event.target.checked)
-                    }
-                  />
-                  <FormLabel htmlFor="guided-mode" m={0}>
-                    {guided ? t('guided') : t('rawUrl')}
-                  </FormLabel>
-                </HStack>
-              )}
-
-              {guided ? (
-                <>
-                  <HStack spacing={4} align={'start'}>
-                    <FormControl flex={2} isInvalid={!!errors.host}>
-                      <FormLabel>{t('host')}</FormLabel>
-                      <Input {...register('host')} />
-                      {errors.host && (
-                        <FormErrorMessage>
-                          {formErrorText(t, errors.host.message, 'required')}
-                        </FormErrorMessage>
-                      )}
-                    </FormControl>
-                    <FormControl flex={1}>
-                      <FormLabel>{t('port')}</FormLabel>
-                      <Input {...register('port')} />
-                    </FormControl>
-                  </HStack>
-                  <FormControl>
-                    <FormLabel>{t('database')}</FormLabel>
-                    <Input {...register('database')} />
-                    {errors.database && (
-                      <FormErrorMessage>
-                        {formErrorText(t, errors.database.message, 'required')}
-                      </FormErrorMessage>
-                    )}
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel>{t('urlPreview')}</FormLabel>
-                    <Input
-                      value={urlPreview}
-                      isReadOnly
-                      fontFamily={'monospace'}
-                      fontSize={'sm'}
-                      backgroundColor="surfaceSubtle"
-                    />
-                  </FormControl>
-                </>
-              ) : (
-                <FormControl>
-                  <FormLabel>{t('jdbcUrl')}</FormLabel>
-                  <Input {...register('jdbcUrl')} fontFamily={'monospace'} />
-                  {errors.jdbcUrl && (
-                    <FormErrorMessage>
-                      {formErrorText(t, errors.jdbcUrl.message, 'required')}
-                    </FormErrorMessage>
-                  )}
-                </FormControl>
-              )}
+              <FormControl>
+                <FormLabel>{t('jdbcUrl')}</FormLabel>
+                <Input {...register('jdbcUrl')} fontFamily={'monospace'} />
+                {errors.jdbcUrl && (
+                  <FormErrorMessage>
+                    {formErrorText(t, errors.jdbcUrl.message, 'required')}
+                  </FormErrorMessage>
+                )}
+              </FormControl>
 
               <FormControl>
                 <FormLabel>{t('driver')}</FormLabel>

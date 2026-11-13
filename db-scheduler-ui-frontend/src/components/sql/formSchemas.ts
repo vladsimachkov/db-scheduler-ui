@@ -12,49 +12,11 @@
  * limitations under the License.
  */
 import { z } from 'zod';
-import { SqlDialect } from 'src/models/SqlConnection';
-
-export const DEFAULT_PORTS: Record<SqlDialect, string> = {
-  ORACLE: '1521',
-  TRINO: '8443',
-  IMPALA: '21050',
-  MYSQL: '3306',
-  GENERIC: '',
-};
-
-/** Builds the JDBC URL from the guided fields. Driver class is left to DriverManager. */
-export function buildJdbcUrl(values: {
-  dialect: SqlDialect;
-  host: string;
-  port: string;
-  database: string;
-  jdbcUrl: string;
-}): string {
-  const host = values.host.trim();
-  const port = values.port.trim();
-  const db = values.database.trim();
-  switch (values.dialect) {
-    case 'ORACLE':
-      return `jdbc:oracle:thin:@//${host}:${port}/${db}`;
-    case 'TRINO':
-      return `jdbc:trino://${host}${port ? `:${port}` : ''}${db ? `/${db}` : ''}`;
-    case 'IMPALA':
-      return `jdbc:impala://${host}${port ? `:${port}` : ''}${db ? `/${db}` : ''}`;
-    case 'MYSQL':
-      return `jdbc:mysql://${host}:${port}/${db}`;
-    default:
-      return values.jdbcUrl.trim();
-  }
-}
 
 export const connectionFormSchema = z
   .object({
     name: z.string().trim().min(1, 'required').max(100, 'tooLong'),
     dialect: z.enum(['ORACLE', 'TRINO', 'IMPALA', 'MYSQL', 'GENERIC']),
-    guided: z.boolean(),
-    host: z.string(),
-    port: z.string(),
-    database: z.string(),
     jdbcUrl: z.string(),
     driverClass: z.string().max(300, 'tooLong'),
     username: z.string().max(300, 'tooLong'),
@@ -63,25 +25,7 @@ export const connectionFormSchema = z
     propertiesJson: z.string().max(4000, 'tooLong'),
   })
   .superRefine((values, ctx) => {
-    if (values.guided) {
-      if (!values.host.trim()) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['host'],
-          message: 'required',
-        });
-      }
-      if (
-        (values.dialect === 'ORACLE' || values.dialect === 'MYSQL') &&
-        !values.database.trim()
-      ) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['database'],
-          message: 'required',
-        });
-      }
-    } else if (!values.jdbcUrl.trim()) {
+    if (!values.jdbcUrl.trim()) {
       ctx.addIssue({
         code: 'custom',
         path: ['jdbcUrl'],

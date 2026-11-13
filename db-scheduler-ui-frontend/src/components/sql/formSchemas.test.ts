@@ -14,7 +14,6 @@
 import { describe, expect, it } from 'vitest';
 import { ZodError } from 'zod';
 import {
-  buildJdbcUrl,
   connectionFormSchema,
   sqlJobFormSchema,
 } from 'src/components/sql/formSchemas';
@@ -29,11 +28,7 @@ function messagesFor(error: unknown, path: string): string[] {
 const baseConnection = {
   name: 'demo',
   dialect: 'ORACLE' as const,
-  guided: true,
-  host: 'db.example.com',
-  port: '1521',
-  database: 'ORCL',
-  jdbcUrl: '',
+  jdbcUrl: 'jdbc:oracle:thin:@//db.example.com:1521/ORCL',
   driverClass: '',
   username: '',
   password: '',
@@ -53,69 +48,14 @@ const baseJob = {
   timeoutSeconds: '300',
 };
 
-describe('buildJdbcUrl', () => {
-  it('builds Oracle thin service-name URLs', () => {
-    expect(
-      buildJdbcUrl({
-        dialect: 'ORACLE',
-        host: 'db',
-        port: '1521',
-        database: 'ORCLPDB1',
-        jdbcUrl: '',
-      }),
-    ).toBe('jdbc:oracle:thin:@//db:1521/ORCLPDB1');
-  });
-
-  it('omits empty port and database segments for Trino and Impala', () => {
-    expect(
-      buildJdbcUrl({ dialect: 'TRINO', host: 'trino', port: '', database: '', jdbcUrl: '' }),
-    ).toBe('jdbc:trino://trino');
-    expect(
-      buildJdbcUrl({
-        dialect: 'IMPALA',
-        host: 'impala',
-        port: '21050',
-        database: 'default',
-        jdbcUrl: '',
-      }),
-    ).toBe('jdbc:impala://impala:21050/default');
-  });
-
-  it('builds MySQL URLs and passes GENERIC through', () => {
-    expect(
-      buildJdbcUrl({ dialect: 'MYSQL', host: 'mysql', port: '3306', database: 'app', jdbcUrl: '' }),
-    ).toBe('jdbc:mysql://mysql:3306/app');
-    expect(
-      buildJdbcUrl({
-        dialect: 'GENERIC',
-        host: '',
-        port: '',
-        database: '',
-        jdbcUrl: ' jdbc:h2:mem:demo ',
-      }),
-    ).toBe('jdbc:h2:mem:demo');
-  });
-});
-
 describe('connectionFormSchema', () => {
-  it('accepts a valid guided connection', () => {
+  it('accepts a valid connection', () => {
     expect(connectionFormSchema.safeParse(baseConnection).success).toBe(true);
   });
 
-  it('requires host in guided mode and database for Oracle/MySQL', () => {
-    const result = connectionFormSchema.safeParse({ ...baseConnection, host: ' ' });
-    expect(result.success).toBe(false);
-    expect(messagesFor(result.error, 'host')).toContain('required');
-
-    const noDb = connectionFormSchema.safeParse({ ...baseConnection, database: '' });
-    expect(noDb.success).toBe(false);
-    expect(messagesFor(noDb.error, 'database')).toContain('required');
-  });
-
-  it('requires jdbcUrl in raw mode', () => {
+  it('requires jdbcUrl', () => {
     const result = connectionFormSchema.safeParse({
       ...baseConnection,
-      guided: false,
       jdbcUrl: '  ',
     });
     expect(result.success).toBe(false);
