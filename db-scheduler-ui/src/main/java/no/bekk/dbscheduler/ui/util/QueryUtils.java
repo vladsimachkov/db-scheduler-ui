@@ -28,11 +28,22 @@ import no.bekk.dbscheduler.ui.model.TaskRequestParams.TaskSort;
 
 public class QueryUtils {
 
-  public static <T> List<T> paginate(List<T> allItems, int pageNumber, int pageSize) {
-    int startIndex = pageNumber * pageSize;
-    int endIndex = Math.min(startIndex + pageSize, allItems.size());
+  private static final int MAX_PAGE_SIZE = 500;
 
-    return (startIndex < endIndex) ? allItems.subList(startIndex, endIndex) : new ArrayList<>();
+  /** The page size actually applied by {@link #paginate}; use it for page-count math. */
+  public static int effectivePageSize(int pageSize) {
+    return Math.min(Math.max(1, pageSize), MAX_PAGE_SIZE);
+  }
+
+  public static <T> List<T> paginate(List<T> allItems, int pageNumber, int pageSize) {
+    int safePageNumber = Math.max(0, pageNumber);
+    int safePageSize = effectivePageSize(pageSize);
+    long startIndex = (long) safePageNumber * safePageSize;
+    if (startIndex >= allItems.size()) {
+      return new ArrayList<>();
+    }
+    int endIndex = (int) Math.min(startIndex + safePageSize, allItems.size());
+    return allItems.subList((int) startIndex, endIndex);
   }
 
   public static List<TaskModel> filterTasks(

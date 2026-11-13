@@ -33,10 +33,14 @@ import no.bekk.dbscheduler.ui.model.TaskRequestParams;
 import no.bekk.dbscheduler.ui.util.Caching;
 import no.bekk.dbscheduler.ui.util.QueryUtils;
 import no.bekk.dbscheduler.ui.util.mapper.TaskMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 public class TaskLogic {
+
+  private static final Logger log = LoggerFactory.getLogger(TaskLogic.class);
 
   private final Scheduler scheduler;
   private final Caching caching;
@@ -76,7 +80,7 @@ public class TaskLogic {
                       execution.getTaskInstance().getTaskName(),
                       Instant.now());
                 } catch (ResponseStatusException e) {
-                  System.out.println("Failed to run task: " + e.getMessage());
+                  log.warn("Failed to run task: {}", e.getMessage());
                 }
               }
             });
@@ -117,7 +121,8 @@ public class TaskLogic {
             QueryUtils.filterTasks(tasks, params.getFilter()), params.getSorting(), params.isAsc());
     List<TaskModel> pagedTasks =
         QueryUtils.paginate(tasks, params.getPageNumber(), params.getSize());
-    return new GetTasksResponse(tasks.size(), pagedTasks, params.getSize());
+    return new GetTasksResponse(
+        tasks.size(), pagedTasks, QueryUtils.effectivePageSize(params.getSize()));
   }
 
   public GetTasksResponse getTask(TaskDetailsRequestParams params) {
@@ -168,7 +173,8 @@ public class TaskLogic {
 
     List<TaskModel> pagedTasks =
         QueryUtils.paginate(tasks, params.getPageNumber(), params.getSize());
-    return new GetTasksResponse(tasks.size(), pagedTasks, params.getSize());
+    return new GetTasksResponse(
+        tasks.size(), pagedTasks, QueryUtils.effectivePageSize(params.getSize()));
   }
 
   public PollResponse pollTasks(TaskDetailsRequestParams params) {
@@ -187,7 +193,7 @@ public class TaskLogic {
 
     for (ScheduledExecution<Object> task : allTasks) {
       String taskName = task.getTaskInstance().getTaskName();
-      String status = getStatus(task);
+      String status = caching.getStatus(task);
       String cachedStatus = caching.getStatusFromCache(task.getTaskInstance());
 
       if (cachedStatus == null) {
@@ -197,15 +203,15 @@ public class TaskLogic {
       }
 
       if (!cachedStatus.equals(status)) {
-        handleStatusChange(
-            params,
-            newFailureTaskNames,
-            newRunningTaskNames,
-            taskName,
-            status,
-            cachedStatus,
-            stoppedFailing,
-            finishedRunning);
+        StatusDelta delta =
+            handleStatusChange(
+                params, newFailureTaskNames, newRunningTaskNames, taskName, status, cachedStatus);
+        if (delta.stoppedFailing()) {
+          stoppedFailing++;
+        }
+        if (delta.finishedRunning()) {
+          finishedRunning++;
+        }
       }
     }
 
@@ -237,22 +243,23 @@ public class TaskLogic {
     }
   }
 
-  private void handleStatusChange(
+  private StatusDelta handleStatusChange(
       TaskDetailsRequestParams params,
       Set<String> newFailureTaskNames,
       Set<String> newRunningTaskNames,
       String taskName,
       String status,
-      String cachedStatus,
-      int stoppedFailing,
-      int finishedRunning) {
+      String cachedStatus) {
+    boolean stoppedFailing = false;
+    boolean finishedRunning = false;
+
     if (cachedStatus.charAt(0) == '0'
         && status.charAt(0) == '1'
         && (!newFailureTaskNames.contains(taskName) || params.getTaskName() != null)) {
       newFailureTaskNames.add(taskName);
     }
     if (cachedStatus.charAt(0) == '1' && status.charAt(0) == '0') {
-      stoppedFailing++;
+      stoppedFailing = true;
     }
 
     if (cachedStatus.charAt(1) == '0'
@@ -261,12 +268,11 @@ public class TaskLogic {
       newRunningTaskNames.add(taskName);
     }
     if (cachedStatus.charAt(1) == '1' && status.charAt(1) == '0') {
-      finishedRunning++;
+      finishedRunning = true;
     }
+
+    return new StatusDelta(stoppedFailing, finishedRunning);
   }
 
-  private String getStatus(ScheduledExecution<Object> task) {
-    return (task.getConsecutiveFailures() > 0 ? "1" : "0")
-        + (task.getPickedBy() != null ? "1" : "0");
-  }
+  private record StatusDelta(boolean stoppedFailing, boolean finishedRunning) {}
 }

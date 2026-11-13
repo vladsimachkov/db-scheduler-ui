@@ -46,6 +46,27 @@ class QueryUtilsTest {
     assertThat(QueryUtils.paginate(items, 1, 10)).isEmpty();
   }
 
+  @Test
+  void paginate_negativePageNumber_clampedToFirstPage() {
+    List<String> items = IntStream.rangeClosed(1, 5).mapToObj(String::valueOf).toList();
+    assertThat(QueryUtils.paginate(items, -3, 10)).containsExactly("1", "2", "3", "4", "5");
+  }
+
+  @Test
+  void paginate_negativeSize_clampedToOne() {
+    List<String> items = IntStream.rangeClosed(1, 5).mapToObj(String::valueOf).toList();
+    assertThat(QueryUtils.paginate(items, 0, -5)).containsExactly("1");
+    assertThat(QueryUtils.paginate(items, 1, 0)).containsExactly("2");
+  }
+
+  @Test
+  void paginate_oversizedSize_clampedToMax() {
+    List<String> items = IntStream.rangeClosed(1, 600).mapToObj(String::valueOf).toList();
+    assertThat(QueryUtils.paginate(items, 0, 10_000)).hasSize(500);
+    assertThat(QueryUtils.effectivePageSize(10_000)).isEqualTo(500);
+    assertThat(QueryUtils.effectivePageSize(0)).isEqualTo(1);
+  }
+
   // --- Filter ---
 
   @Test

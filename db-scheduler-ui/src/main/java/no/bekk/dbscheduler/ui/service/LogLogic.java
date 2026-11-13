@@ -78,7 +78,8 @@ public class LogLogic {
     List<LogModel> pagedLogs =
         QueryUtils.paginate(logs, requestParams.getPageNumber(), requestParams.getSize());
 
-    return new GetLogsResponse(logs.size(), pagedLogs, requestParams.getSize());
+    return new GetLogsResponse(
+        logs.size(), pagedLogs, QueryUtils.effectivePageSize(requestParams.getSize()));
   }
 
   public LogPollResponse pollLogs(TaskDetailsRequestParams requestParams) {

@@ -29,19 +29,22 @@ import org.springframework.stereotype.Component;
 @Component
 public class Caching {
 
-  private final Map<String, String> taskStatusCache = new ConcurrentHashMap<>();
-  private final List<ScheduledExecution<Object>> taskDataCache = new ArrayList<>();
-  private final Map<Long, LogModel> logCache = new ConcurrentHashMap<>();
+  // The caches are replaced wholesale (never mutated in place) so concurrent readers always
+  // observe a complete, consistent snapshot instead of a partially updated one.
+  private volatile Map<String, String> taskStatusCache = new ConcurrentHashMap<>();
+  private volatile List<ScheduledExecution<Object>> taskDataCache = List.of();
+  private volatile Map<Long, LogModel> logCache = new ConcurrentHashMap<>();
 
   public List<ScheduledExecution<Object>> getExecutionsFromCacheOrDB(
       boolean isRefresh, Scheduler scheduler) {
-    if (isRefresh || taskDataCache.isEmpty()) {
+    List<ScheduledExecution<Object>> cached = taskDataCache;
+    if (isRefresh || cached.isEmpty()) {
       List<ScheduledExecution<Object>> executions =
           getExecutionsFromDBWithoutUpdatingCache(scheduler);
       updateCache(executions);
       return executions;
     } else {
-      return taskDataCache;
+      return cached;
     }
   }
 
@@ -54,12 +57,12 @@ public class Caching {
   }
 
   public void updateCache(List<ScheduledExecution<Object>> executions) {
-    taskStatusCache.clear();
-    taskDataCache.clear();
-    taskDataCache.addAll(executions);
+    Map<String, String> newStatusCache = new ConcurrentHashMap<>();
     for (ScheduledExecution<Object> execution : executions) {
-      taskStatusCache.put(getUniqueId(execution), getStatus(execution));
+      newStatusCache.put(getUniqueId(execution), getStatus(execution));
     }
+    taskStatusCache = newStatusCache;
+    taskDataCache = List.copyOf(executions);
   }
 
   public String getUniqueId(ScheduledExecution<Object> task) {
@@ -88,10 +91,11 @@ public class Caching {
   }
 
   public void updateLogCache(List<LogModel> logs) {
-    logCache.clear();
+    Map<Long, LogModel> newLogCache = new ConcurrentHashMap<>();
     for (LogModel log : logs) {
-      logCache.put(log.getId(), log);
+      newLogCache.put(log.getId(), log);
     }
+    logCache = newLogCache;
   }
 
   public boolean checkLogCacheForKey(Long key) {

@@ -14,7 +14,9 @@
 package no.bekk.dbscheduler.ui.util.mapper;
 
 import com.github.kagkarlsson.scheduler.ScheduledExecution;
+import java.time.Instant;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -46,6 +48,13 @@ public class TaskMapper {
     return tasks.stream().collect(Collectors.groupingBy(TaskModel::getTaskName)).values().stream()
         .map(
             taskModels -> {
+              // Sort members so the flattened parallel-lists are in a stable order across
+              // requests (groupingBy iteration order is otherwise non-deterministic).
+              taskModels.sort(
+                  Comparator.comparing(
+                          TaskMapper::firstExecutionTime, Comparator.nullsLast(Instant::compareTo))
+                      .thenComparing(
+                          TaskMapper::firstTaskInstance, Comparator.nullsLast(String::compareTo)));
               TaskModel taskModel = taskModels.get(0);
               taskModel.setTaskInstance(
                   taskModels.stream()
@@ -81,7 +90,7 @@ public class TaskMapper {
                   taskModels.stream()
                       .map(TaskModel::getLastFailure)
                       .filter(Objects::nonNull)
-                      .findFirst()
+                      .max(Instant::compareTo)
                       .orElse(null));
               taskModel.setConsecutiveFailures(
                   taskModels.stream()
@@ -90,7 +99,19 @@ public class TaskMapper {
                       .collect(Collectors.toList())); // Modified here
               return taskModel;
             })
+        .sorted(Comparator.comparing(TaskModel::getTaskName))
         .collect(Collectors.toList());
+  }
+
+  private static Instant firstExecutionTime(TaskModel task) {
+    return task.getExecutionTime().stream()
+        .filter(Objects::nonNull)
+        .min(Instant::compareTo)
+        .orElse(null);
+  }
+
+  private static String firstTaskInstance(TaskModel task) {
+    return task.getTaskInstance().stream().filter(Objects::nonNull).findFirst().orElse(null);
   }
 
   public static List<TaskModel> mapAllExecutionsToTaskModelUngrouped(
