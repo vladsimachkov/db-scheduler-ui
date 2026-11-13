@@ -8,6 +8,36 @@
   </head>
 
   <body>
+    <script>
+      /* Pre-paint color mode script — the exact output of Chakra's built-in
+         <ColorModeScript initialColorMode="system" /> (the component itself
+         only executes in SSR HTML, so Vite SPA convention is to inline it). */
+      (function () {
+        try {
+          var apply = function (c) {
+            var mq = '(prefers-color-scheme: dark)';
+            var system = window.matchMedia(mq).matches ? 'dark' : 'light';
+            var mode = c === 'system' ? system : c;
+            var html = document.documentElement;
+            var body = document.body;
+            var isDark = mode === 'dark';
+            body.classList.add(isDark ? 'chakra-ui-dark' : 'chakra-ui-light');
+            body.classList.remove(isDark ? 'chakra-ui-light' : 'chakra-ui-dark');
+            html.style.colorScheme = mode;
+            html.dataset.theme = mode;
+            return mode;
+          };
+          var init = 'system';
+          var key = 'chakra-ui-color-mode';
+          var stored = localStorage.getItem(key);
+          if (stored) {
+            apply(stored);
+          } else {
+            localStorage.setItem(key, apply(init));
+          }
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script src="./main.tsx" type="module"></script>
   </body>

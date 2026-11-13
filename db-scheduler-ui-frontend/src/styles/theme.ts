@@ -18,6 +18,12 @@ import { extendTheme } from '@chakra-ui/react';
 // (body.chakra-ui-dark or html[data-theme=dark]). Light values match the legacy
 // src/styles/colors.ts palette verbatim, so light mode renders unchanged.
 export const theme = extendTheme({
+  config: {
+    // stock Chakra color mode: follow the OS, a manual toggle sticks until
+    // the next OS-level theme change (useSystemColorMode keeps them in sync)
+    initialColorMode: 'system',
+    useSystemColorMode: true,
+  },
   semanticTokens: {
     colors: {
       // neutral surfaces and text
