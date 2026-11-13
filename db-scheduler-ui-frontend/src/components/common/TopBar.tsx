@@ -24,6 +24,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogoIcon } from 'src/assets/icons/Logo';
+import { ColorModeToggle } from 'src/components/common/ColorModeToggle';
 import colors from 'src/styles/colors';
 import {
   getShowHistory,
@@ -209,6 +210,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             </MenuItem>
           </MenuList>
         </Menu>
+        <ColorModeToggle />
       </Box>
     </Box>
   );

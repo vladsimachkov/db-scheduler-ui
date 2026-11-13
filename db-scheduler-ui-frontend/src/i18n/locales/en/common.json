@@ -23,6 +23,10 @@
     "ru": "Русский",
     "en": "English"
   },
+  "theme": {
+    "toDark": "Switch to dark theme",
+    "toLight": "Switch to light theme"
+  },
   "refresh": {
     "label": "Refresh",
     "failedSince_one": "{{count}} failed since refresh",
