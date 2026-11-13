@@ -13,16 +13,15 @@
  */
 import { Box } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
-import colors from 'src/styles/colors';
 interface LogStatusProps {
   succeeded: boolean;
 }
 
 export const LogStatus: React.FC<LogStatusProps> = ({ succeeded }) => {
   const { t } = useTranslation();
-  const borderColor = succeeded ? colors.success[200] : colors.failed[200];
-  const backgroundColor = succeeded ? colors.success[100] : colors.failed[100];
-  const color = succeeded ? colors.success[200] : colors.failed[200];
+  const borderColor = succeeded ? 'success' : 'failed';
+  const backgroundColor = succeeded ? 'successFill' : 'failedFill';
+  const color = succeeded ? 'success' : 'failed';
 
   return (
     <Box

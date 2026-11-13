@@ -22,7 +22,6 @@ import { useInfiniteScrolling } from 'src/hooks/useInfiniteTaskScrolling';
 import { SortBy } from 'src/models/QueryParams';
 import { LogResponse } from 'src/models/TasksResponse';
 import { ALL_LOG_QUERY_KEY, getLogs } from 'src/services/getLogs';
-import colors from 'src/styles/colors';
 import { HeaderBar } from '../common/HeaderBar';
 
 export const LogList: React.FC = () => {
@@ -127,7 +126,7 @@ export const LogList: React.FC = () => {
         p="8px 16px"
         justifyContent={'space-between'}
         spacing={5}
-        textColor={colors.primary['500']}
+        textColor={'textSecondary'}
         fontSize={'sm'}
         textAlign="left"
       >
@@ -155,9 +154,9 @@ export const LogList: React.FC = () => {
       <Flex justifyContent="center" alignItems="center" mt={4}>
         <Button
           onClick={() => fetchNextPage()}
-          bgColor={'white'}
+          bgColor={'surface'}
           isDisabled={!hasNextPage || isFetchingNextPage}
-          borderColor={colors.primary}
+          borderColor={'border'}
           borderWidth={1}
           fontWeight={'medium'}
           mb={24}

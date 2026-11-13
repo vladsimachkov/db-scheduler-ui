@@ -13,7 +13,6 @@
  */
 import { AccordionPanel, Box, Divider, Text, VStack } from '@chakra-ui/react';
 import { useTranslation } from 'react-i18next';
-import colors from 'src/styles/colors';
 import { LogDataRow } from 'src/components/history/LogDataRow';
 interface LogAccordionItemProps {
   taskData: object | null;
@@ -31,7 +30,7 @@ export const LogAccordionItem: React.FC<LogAccordionItemProps> = ({
       <VStack
         align="start"
         spacing={2}
-        bgColor={colors.primary['100']}
+        bgColor={'surface'}
         p={0}
         w={'100%'}
         borderRadius={4}
@@ -40,19 +39,19 @@ export const LogAccordionItem: React.FC<LogAccordionItemProps> = ({
           <Text
             ml={'16px'}
             textDecoration={'underline'}
-            color={colors.primary['500']}
+            color={'textSecondary'}
           >
             {t('history:details.stacktrace')}
           </Text>
         )}
 
         <pre style={{ marginLeft: '16px', marginTop: '8px' }}>{stackTrace}</pre>
-        {stackTrace && taskData && <Divider color={colors.primary['300']} />}
+        {stackTrace && taskData && <Divider color={'border'} />}
         {taskData && (
           <Text
             ml={'16px'}
             textDecoration={'underline'}
-            color={colors.primary['500']}
+            color={'textSecondary'}
           >
             {t('history:details.taskData')}
           </Text>

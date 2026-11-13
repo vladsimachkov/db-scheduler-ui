@@ -15,7 +15,6 @@ import DatePickerImport from 'react-datepicker';
 import { Box } from '@chakra-ui/react';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useTranslation } from 'react-i18next';
-import colors from 'src/styles/colors';
 import { interopDefault } from 'src/utils/interopDefault';
 import { dateFnsLocale } from 'src/i18n';
 
@@ -39,9 +38,9 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
     <Box
       p={1}
       borderRadius={4}
-      borderColor={colors.primary[300]}
+      borderColor={'border'}
       borderWidth={1}
-      backgroundColor={colors.primary[100]}
+      backgroundColor={'surface'}
       w="fit-content"
     >
       <DatePicker
