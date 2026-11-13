@@ -93,6 +93,45 @@ class SmokeTest {
     assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
   }
 
+  @Test
+  void deletingUnknownTaskReturnsProblemDetail() {
+    assertThat(context.containsBean("globalExceptionHandler")).isTrue();
+
+    ResponseEntity<String> result =
+        restTemplate.postForEntity(
+            baseUrl
+                + "/db-scheduler-api/tasks/delete?id=does-not-exist&name="
+                + SEND_WELCOME_EMAIL.getTaskName(),
+            null,
+            String.class);
+
+    assertThat(result.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    assertThat(result.getHeaders().getContentType())
+        .isNotNull()
+        .satisfies(
+            ct -> assertThat(ct.isCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)).isTrue());
+    assertThat(result.getBody()).contains("No ScheduledExecution found");
+  }
+
+  @Test
+  void missingRequiredParameterReturnsBadRequestNotServerError() {
+    // Regression test: a catch-all @ExceptionHandler(Exception.class) used to downgrade
+    // Spring MVC argument-resolution errors (400) to 500.
+    ResponseEntity<String> result =
+        restTemplate.postForEntity(
+            baseUrl
+                + "/db-scheduler-api/tasks/rerun?id=whatever&name="
+                + SEND_WELCOME_EMAIL.getTaskName(),
+            null,
+            String.class);
+
+    assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    assertThat(result.getHeaders().getContentType())
+        .isNotNull()
+        .satisfies(
+            ct -> assertThat(ct.isCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON)).isTrue());
+  }
+
   // Regression test for
   // issue #149: the ByteArrayResource fallback threw FileNotFoundException on lastModified(),
   // returning 500 instead of the SPA shell.

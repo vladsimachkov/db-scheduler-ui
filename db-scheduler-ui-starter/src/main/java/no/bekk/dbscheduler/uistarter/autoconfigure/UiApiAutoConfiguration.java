@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import javax.sql.DataSource;
 import no.bekk.dbscheduler.ui.controller.ConfigController;
+import no.bekk.dbscheduler.ui.controller.GlobalExceptionHandler;
 import no.bekk.dbscheduler.ui.controller.IndexHtmlController;
 import no.bekk.dbscheduler.ui.controller.LogController;
 import no.bekk.dbscheduler.ui.controller.OverviewController;
@@ -79,6 +80,15 @@ public class UiApiAutoConfiguration {
   @ConditionalOnMissingBean
   Caching caching() {
     return new Caching();
+  }
+
+  @Bean
+  @ConditionalOnWebApplication(type = Type.SERVLET)
+  @ConditionalOnMissingBean
+  GlobalExceptionHandler globalExceptionHandler() {
+    // Servlet-only: ResponseEntityExceptionHandler references jakarta.servlet, which is absent
+    // in reactive applications.
+    return new GlobalExceptionHandler();
   }
 
   @Bean
@@ -182,7 +192,8 @@ public class UiApiAutoConfiguration {
   @Bean
   @ConditionalOnMissingBean
   ConfigController configController(DbSchedulerUiProperties properties) {
-    return new ConfigController(properties.history(), properties.overview(), properties::readOnly);
+    return new ConfigController(
+        properties.history(), properties.overview(), properties::sql, properties::readOnly);
   }
 
   @Bean

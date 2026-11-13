@@ -23,5 +23,6 @@ import lombok.Setter;
 public class ConfigResponse {
   private boolean showHistory;
   private boolean showOverview;
+  private boolean showSql;
   private boolean readOnly;
 }
