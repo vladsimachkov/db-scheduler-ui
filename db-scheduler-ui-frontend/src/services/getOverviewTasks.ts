@@ -11,6 +11,7 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { redirectToUi } from 'src/services/apiClient';
 import { OverviewTask } from 'src/models/OverviewTask';
 
 const API_BASE_URL: string =
@@ -28,7 +29,7 @@ export const getOverviewTasks = async (): Promise<OverviewTask[]> => {
   });
 
   if (response.status === 401) {
-    document.location.href = '/db-scheduler';
+    redirectToUi();
   } else if (!response.ok) {
     throw new Error(
       `Error fetching overview tasks. Status: ${response.statusText}`,

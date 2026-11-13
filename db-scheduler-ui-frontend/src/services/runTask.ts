@@ -11,6 +11,7 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { redirectToUi } from 'src/services/apiClient';
 const API_BASE_URL: string =
   (import.meta.env.VITE_API_BASE_URL as string) ??
   window.location.origin + (window.CONTEXT_PATH || '') + '/db-scheduler-api';
@@ -35,7 +36,7 @@ const runTask = async (id: string, name: string, scheduleTime?:Date) => {
   );
 
   if (response.status == 401) {
-    document.location.href = '/db-scheduler';
+    redirectToUi();
   } else if (!response.ok) {
     throw new Error(`Error executing task. Status: ${response.statusText}`);
   }

@@ -11,6 +11,7 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { redirectToUi } from 'src/services/apiClient';
 import { PollResponse } from 'src/models/PollResponse';
 import { TaskDetailsRequestParams } from 'src/models/TaskRequestParams';
 
@@ -61,7 +62,7 @@ export const pollLogs = async (
   });
 
   if (response.status == 401) {
-    document.location.href = '/db-scheduler';
+    redirectToUi();
   } else if (!response.ok) {
     throw new Error(`Error polling tasks. Status: ${response.statusText}`);
   }

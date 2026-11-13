@@ -11,6 +11,7 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { redirectToUi } from 'src/services/apiClient';
 
 import { TaskDetailsRequestParams } from 'src/models/TaskRequestParams';
 import { LogResponse } from 'src/models/TasksResponse';
@@ -63,7 +64,7 @@ export const getLogs = async (
   });
 
   if (response.status == 401) {
-    document.location.href = '/db-scheduler';
+    redirectToUi();
   } else if (!response.ok) {
     throw new Error(`Error fetching logs. Status: ${response.statusText}`);
   }
