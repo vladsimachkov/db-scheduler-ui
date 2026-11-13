@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 import { extendTheme } from '@chakra-ui/react';
+import { datepickerDark } from 'src/styles/datepickerDark';
 
 // Semantic color tokens consumed as plain strings (bg="surface", color="textMuted", ...).
 // `default` is the light-mode value, `_dark` applies when the color mode is dark
@@ -71,6 +72,7 @@ export const theme = extendTheme({
       body: {
         bg: 'pageBg',
       },
+      ...datepickerDark,
     },
   },
 });
