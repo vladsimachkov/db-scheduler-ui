@@ -1,0 +1,18 @@
+{
+  "title": "История",
+  "columns": {
+    "status": "Статус",
+    "taskName": "Имя задачи",
+    "taskId": "Task-ID",
+    "timeFinished": "Время завершения",
+    "exceptionMessage": "Сообщение об исключении"
+  },
+  "status": {
+    "succeeded": "Успешно",
+    "failed": "Сбой"
+  },
+  "details": {
+    "stacktrace": "Трассировка стека",
+    "taskData": "Данные задачи"
+  }
+}

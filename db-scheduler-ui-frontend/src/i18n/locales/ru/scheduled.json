@@ -1,0 +1,67 @@
+{
+  "allTasks": "Все задачи",
+  "columns": {
+    "status": "Статус",
+    "taskName": "Имя задачи",
+    "taskId": "Task-ID",
+    "nextExecutionTime": "Время следующего выполнения"
+  },
+  "status": {
+    "failed": "Сбой",
+    "running": "Выполняется",
+    "scheduled": "Запланирована",
+    "group": "Группа"
+  },
+  "filters": {
+    "status": "Статус: {{filter}}",
+    "all": "Все",
+    "failed": "Сбойные",
+    "running": "Выполняемые",
+    "scheduled": "Запланированные",
+    "succeeded": "Успешные"
+  },
+  "search": {
+    "taskName": "Поиск по имени задачи",
+    "taskId": "Поиск по Task-ID",
+    "exactMatch": "Точное совпадение"
+  },
+  "headerBar": {
+    "runAll": "Запустить все",
+    "rerunAllFailed": "Перезапустить все сбойные"
+  },
+  "runButton": {
+    "run": "Запустить",
+    "rerun": "Повторить",
+    "showAll": "Показать все"
+  },
+  "scheduleRunAlert": {
+    "titleRun": "Запуск задачи в заданное время",
+    "titleRerun": "Перезапуск задачи в заданное время",
+    "buttonRun": "Изменить время запуска",
+    "buttonRerun": "Изменить время перезапуска"
+  },
+  "runAllAlert": {
+    "titleRun": "Запустить все",
+    "titleRerunFailed": "Перезапустить все сбойные",
+    "bodyRun": "Вы уверены, что хотите запустить все задачи с именем «{{taskName}}»? Будут затронуты и те, что не попадают под текущие фильтры и поиск.",
+    "bodyRerunFailed": "Вы уверены, что хотите перезапустить все задачи со сбоями с именем «{{taskName}}»? Будут затронуты и те, что не попадают под текущие фильтры и поиск.",
+    "buttonRun": "Запустить все",
+    "buttonRerunFailed": "Перезапустить все"
+  },
+  "dotButton": {
+    "optionsAria": "Действия",
+    "updateExecutionTime": "Изменить время выполнения",
+    "seeHistory": "История задачи",
+    "deleteTask": "Удалить задачу"
+  },
+  "deleteAlert": {
+    "body": "Вы уверены, что хотите удалить задачу «{{taskName}}» с Task-ID: {{taskInstance}}?",
+    "deleteFailed": "Не удалось удалить задачу"
+  },
+  "details": {
+    "lastExecutionTime": "Время последнего выполнения: "
+  },
+  "group": {
+    "more": " + ещё {{count}}"
+  }
+}

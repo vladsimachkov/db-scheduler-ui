@@ -16,9 +16,17 @@ const API_BASE_URL: string =
     (import.meta.env.VITE_API_BASE_URL as string) ??
     window.location.origin + (window.CONTEXT_PATH || '') + '/db-scheduler-api';
 
-const config = await fetch(`${API_BASE_URL}/config`).then((res) =>
-  res.json(),
-);
+// If /config cannot be fetched, fail safe: no optional tabs, and treat the UI as
+// read-only so admin actions are not offered against an unreachable backend.
+let config: Record<string, unknown> = { readOnly: true };
+try {
+  const response = await fetch(`${API_BASE_URL}/config`);
+  if (response.ok) {
+    config = (await response.json()) as Record<string, unknown>;
+  }
+} catch {
+  // Keep the fail-safe defaults above
+}
 
 const showHistory =
   'showHistory' in config ? Boolean(config.showHistory) : false;
@@ -26,8 +34,11 @@ const showHistory =
 const showOverview =
   'showOverview' in config ? Boolean(config.showOverview) : false;
 
+const showSql = 'showSql' in config ? Boolean(config.showSql) : false;
+
 const readOnly = 'readOnly' in config ? Boolean(config.readOnly) : false;
 
 export const getShowHistory = (): boolean => showHistory;
 export const getShowOverview = (): boolean => showOverview;
+export const getShowSql = (): boolean => showSql;
 export const getReadonly = (): boolean => readOnly;

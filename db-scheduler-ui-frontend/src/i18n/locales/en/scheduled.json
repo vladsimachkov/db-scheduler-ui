@@ -1,0 +1,67 @@
+{
+  "allTasks": "All Tasks",
+  "columns": {
+    "status": "Status",
+    "taskName": "Task Name",
+    "taskId": "Task-ID",
+    "nextExecutionTime": "Next Execution Time"
+  },
+  "status": {
+    "failed": "Failed",
+    "running": "Running",
+    "scheduled": "Scheduled",
+    "group": "Group"
+  },
+  "filters": {
+    "status": "Status: {{filter}}",
+    "all": "All",
+    "failed": "Failed",
+    "running": "Running",
+    "scheduled": "Scheduled",
+    "succeeded": "Succeeded"
+  },
+  "search": {
+    "taskName": "Search for task name",
+    "taskId": "Search for task id",
+    "exactMatch": "Exact match"
+  },
+  "headerBar": {
+    "runAll": "Run all",
+    "rerunAllFailed": "Rerun all failed"
+  },
+  "runButton": {
+    "run": "Run",
+    "rerun": "Rerun",
+    "showAll": "Show all"
+  },
+  "scheduleRunAlert": {
+    "titleRun": "Run Task At Time",
+    "titleRerun": "Rerun Task At Time",
+    "buttonRun": "Update Run Time",
+    "buttonRerun": "Update Rerun Time"
+  },
+  "runAllAlert": {
+    "titleRun": "Run All",
+    "titleRerunFailed": "Rerun All Failed",
+    "bodyRun": "Are you sure you want to run all tasks with taskname: {{taskName}}. This will include the ones outside of your current filters and search.",
+    "bodyRerunFailed": "Are you sure you want to rerun all failed tasks with taskname: {{taskName}}. This will include the ones outside of your current filters and search.",
+    "buttonRun": "Run All",
+    "buttonRerunFailed": "Rerun All"
+  },
+  "dotButton": {
+    "optionsAria": "Options",
+    "updateExecutionTime": "Update execution time",
+    "seeHistory": "See history for task",
+    "deleteTask": "Delete task"
+  },
+  "deleteAlert": {
+    "body": "Are you sure you want to delete, {{taskName}} Task-ID:{{taskInstance}}",
+    "deleteFailed": "Failed to delete task"
+  },
+  "details": {
+    "lastExecutionTime": "Last Execution Time: "
+  },
+  "group": {
+    "more": " + {{count}} more"
+  }
+}

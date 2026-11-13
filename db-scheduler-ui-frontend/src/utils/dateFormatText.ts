@@ -12,6 +12,10 @@
  * limitations under the License.
  */
 import { format } from 'date-fns';
+import i18n, { dateFnsLocale } from 'src/i18n';
+
 export function dateFormatText(date: Date) {
-  return format(date, 'dd. MMM yy, H:mm:ss');
+  return format(date, i18n.t('common:date.format'), {
+    locale: dateFnsLocale(),
+  });
 }

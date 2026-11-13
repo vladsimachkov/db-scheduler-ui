@@ -1,0 +1,49 @@
+{
+  "date.format": "dd MMMM yyyy, H:mm:ss",
+  "loading": "Загрузка…",
+  "loadMore": "Загрузить ещё",
+  "nothingMore": "Больше ничего нет",
+  "cancel": "Отмена",
+  "delete": "Удалить",
+  "nav": {
+    "scheduled": "Запланированные",
+    "history": "История",
+    "overview": "Обзор",
+    "homeAria": "Логотип — на главную",
+    "scheduledAria": "Кнопка «Запланированные»",
+    "historyAria": "Кнопка «История»",
+    "overviewAria": "Кнопка «Обзор»",
+    "sql": "SQL-задания",
+    "connections": "Соединения",
+    "sqlAria": "Кнопка «SQL-задания»",
+    "connectionsAria": "Кнопка «Соединения»"
+  },
+  "language": {
+    "switcher": "Язык",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "refresh": {
+    "label": "Обновить",
+    "failedSince_one": "{{count}} новый сбой с момента обновления",
+    "failedSince_few": "{{count}} новых сбоя с момента обновления",
+    "failedSince_many": "{{count}} новых сбоев с момента обновления",
+    "failedSince_other": "{{count}} новых сбоя с момента обновления",
+    "succeededSince_one": "{{count}} успешное выполнение с момента обновления",
+    "succeededSince_few": "{{count}} успешных выполнения с момента обновления",
+    "succeededSince_many": "{{count}} успешных выполнений с момента обновления",
+    "succeededSince_other": "{{count}} успешных выполнения с момента обновления",
+    "runningSince_one": "{{count}} запущенная задача с момента обновления",
+    "runningSince_few": "{{count}} запущенные задачи с момента обновления",
+    "runningSince_many": "{{count}} запущенных задач с момента обновления",
+    "runningSince_other": "{{count}} запущенные задачи с момента обновления",
+    "addedSince_one": "{{count}} новая задача с момента обновления",
+    "addedSince_few": "{{count}} новые задачи с момента обновления",
+    "addedSince_many": "{{count}} новых задач с момента обновления",
+    "addedSince_other": "{{count}} новые задачи с момента обновления"
+  },
+  "dateTime": {
+    "format": "yyyy-MM-dd HH:mm",
+    "placeholder": "ГГГГ-ММ-ДД ЧЧ:ММ"
+  }
+}

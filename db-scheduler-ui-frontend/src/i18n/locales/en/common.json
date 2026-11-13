@@ -1,0 +1,41 @@
+{
+  "date.format": "dd. MMM yy, H:mm:ss",
+  "loading": "Loading...",
+  "loadMore": "Load More",
+  "nothingMore": "Nothing more to load",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "nav": {
+    "scheduled": "Scheduled",
+    "history": "History",
+    "overview": "Overview",
+    "homeAria": "Logo home button",
+    "scheduledAria": "Scheduled button",
+    "historyAria": "History button",
+    "overviewAria": "Overview button",
+    "sql": "SQL jobs",
+    "connections": "Connections",
+    "sqlAria": "SQL jobs button",
+    "connectionsAria": "Connections button"
+  },
+  "language": {
+    "switcher": "Language",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "refresh": {
+    "label": "Refresh",
+    "failedSince_one": "{{count}} failed since refresh",
+    "failedSince_other": "{{count}} failed since refresh",
+    "succeededSince_one": "{{count}} succeeded since refresh",
+    "succeededSince_other": "{{count}} succeeded since refresh",
+    "runningSince_one": "{{count}} running since refresh",
+    "runningSince_other": "{{count}} running since refresh",
+    "addedSince_one": "{{count}} added since refresh",
+    "addedSince_other": "{{count}} added since refresh"
+  },
+  "dateTime": {
+    "format": "yyyy-MM-dd HH:mm",
+    "placeholder": "YYYY-MM-DD HH:mm"
+  }
+}

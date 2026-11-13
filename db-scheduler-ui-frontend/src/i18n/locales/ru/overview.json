@@ -1,0 +1,44 @@
+{
+  "title": "Все задачи",
+  "loading": "Загрузка задач",
+  "error": "Не удалось загрузить задачи",
+  "noMatch": "Ни одна задача не подходит под активные фильтры",
+  "columns": {
+    "task": "Задача",
+    "nextRun": "Следующий запуск",
+    "lastRun": "Последний запуск"
+  },
+  "status": {
+    "failing": "падает",
+    "running": "выполняется",
+    "scheduled": "запланирована",
+    "dormant": "в ожидании"
+  },
+  "recurring": "повторяется",
+  "recurringAria": "Повторяющаяся задача",
+  "runningNow": "выполняется сейчас",
+  "inFuture": "через {{distance}}",
+  "dueAgo": "{{distance}} назад",
+  "lastFailure": "последний сбой",
+  "lastSuccess": "последний успех",
+  "forDuration": "{{base}} уже {{duration}}",
+  "instances_one": "{{count}} экземпляр",
+  "instances_few": "{{count}} экземпляра",
+  "instances_many": "{{count}} экземпляров",
+  "instances_other": "{{count}} экземпляра",
+  "strip": {
+    "totalsAria": "Сводка по задачам",
+    "tasks": "Задачи",
+    "failing": "Сбой",
+    "running": "Выполняются",
+    "scheduled": "Запланированы",
+    "hintTasks": "Показать все задачи",
+    "hintFailing": "Только задачи со сбоями",
+    "hintRunning": "Только выполняющиеся сейчас",
+    "hintScheduled": "Только задачи с очередью",
+    "showing_one": "Показано {{shown}} из {{count}} задачи",
+    "showing_few": "Показано {{shown}} из {{count}} задач",
+    "showing_many": "Показано {{shown}} из {{count}} задач",
+    "showing_other": "Показано {{shown}} из {{count}} задачи"
+  }
+}

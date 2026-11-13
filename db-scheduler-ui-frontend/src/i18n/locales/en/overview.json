@@ -1,0 +1,40 @@
+{
+  "title": "All tasks",
+  "loading": "Loading tasks",
+  "error": "Could not load tasks",
+  "noMatch": "No tasks match the active filters",
+  "columns": {
+    "task": "Task",
+    "nextRun": "Next run",
+    "lastRun": "Last run"
+  },
+  "status": {
+    "failing": "failing",
+    "running": "running",
+    "scheduled": "scheduled",
+    "dormant": "dormant"
+  },
+  "recurring": "recurring",
+  "recurringAria": "Recurring task",
+  "runningNow": "running now",
+  "inFuture": "in {{distance}}",
+  "dueAgo": "due {{distance}} ago",
+  "lastFailure": "last failure",
+  "lastSuccess": "last success",
+  "forDuration": "{{base}} for {{duration}}",
+  "instances_one": "{{count}} instance",
+  "instances_other": "{{count}} instances",
+  "strip": {
+    "totalsAria": "Task totals",
+    "tasks": "Tasks",
+    "failing": "Failing",
+    "running": "Running",
+    "scheduled": "Scheduled",
+    "hintTasks": "Show all tasks",
+    "hintFailing": "Show only tasks with failures",
+    "hintRunning": "Show only tasks running right now",
+    "hintScheduled": "Show only tasks with queued work",
+    "showing_one": "Showing {{shown}} of {{count}} task",
+    "showing_other": "Showing {{shown}} of {{count}} tasks"
+  }
+}

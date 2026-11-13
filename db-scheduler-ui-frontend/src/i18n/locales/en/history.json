@@ -1,0 +1,18 @@
+{
+  "title": "History",
+  "columns": {
+    "status": "Status",
+    "taskName": "Task Name",
+    "taskId": "Task-ID",
+    "timeFinished": "Time Finished",
+    "exceptionMessage": "Exception Message"
+  },
+  "status": {
+    "succeeded": "Succeeded",
+    "failed": "Failed"
+  },
+  "details": {
+    "stacktrace": "Stacktrace",
+    "taskData": "Taskdata"
+  }
+}

@@ -14,6 +14,7 @@
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './src/App';
+import './src/i18n';
 
 const basename = (window.CONTEXT_PATH || '') + import.meta.env.BASE_URL;
 
