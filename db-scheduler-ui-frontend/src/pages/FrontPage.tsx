@@ -17,11 +17,19 @@ import { TopBar } from 'src/components/common/TopBar';
 import { LogList } from 'src/components/history/LogList';
 import TaskList from 'src/components/scheduled/TaskList';
 import { OverviewPage } from 'src/pages/OverviewPage';
-import { getShowHistory, getShowOverview } from 'src/utils/config';
+import SqlConnectionsPage from 'src/pages/SqlConnectionsPage';
+import SqlJobExecutionsPage from 'src/pages/SqlJobExecutionsPage';
+import SqlJobsPage from 'src/pages/SqlJobsPage';
+import {
+  getShowHistory,
+  getShowOverview,
+  getShowSql,
+} from 'src/utils/config';
 
 export const FrontPage: React.FC = () => {
   const showHistory = getShowHistory();
   const showOverview = getShowOverview();
+  const showSql = getShowSql();
   return (
     <>
       <TopBar title={'DB Scheduler UI'} />
@@ -39,6 +47,19 @@ export const FrontPage: React.FC = () => {
               <Route
                 path="/scheduled/:taskName/page/:page"
                 element={<TaskList />}
+              ></Route>
+            </>
+          )}
+          {showSql && (
+            <>
+              <Route path="/sql-jobs" element={<SqlJobsPage />}></Route>
+              <Route
+                path="/sql-jobs/:jobId/executions"
+                element={<SqlJobExecutionsPage />}
+              ></Route>
+              <Route
+                path="/sql-connections"
+                element={<SqlConnectionsPage />}
               ></Route>
             </>
           )}
