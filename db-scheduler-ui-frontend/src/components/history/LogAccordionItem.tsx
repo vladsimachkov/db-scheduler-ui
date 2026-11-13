@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 import { AccordionPanel, Box, Divider, Text, VStack } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import colors from 'src/styles/colors';
 import { LogDataRow } from 'src/components/history/LogDataRow';
 interface LogAccordionItemProps {
@@ -23,6 +24,7 @@ export const LogAccordionItem: React.FC<LogAccordionItemProps> = ({
   stackTrace,
   taskData,
 }) => {
+  const { t } = useTranslation();
   return (
     <AccordionPanel overflowX="auto" p={0}>
       <Box display={'flex'} justifyContent={'space-between'}></Box>
@@ -40,7 +42,7 @@ export const LogAccordionItem: React.FC<LogAccordionItemProps> = ({
             textDecoration={'underline'}
             color={colors.primary['500']}
           >
-            Stacktrace
+            {t('history:details.stacktrace')}
           </Text>
         )}
 
@@ -52,7 +54,7 @@ export const LogAccordionItem: React.FC<LogAccordionItemProps> = ({
             textDecoration={'underline'}
             color={colors.primary['500']}
           >
-            Taskdata
+            {t('history:details.taskData')}
           </Text>
         )}
 

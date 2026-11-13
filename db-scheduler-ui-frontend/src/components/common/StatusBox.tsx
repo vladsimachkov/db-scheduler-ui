@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 import { Box } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import { NumberCircle } from 'src/components/common/NumberCircle';
 import colors from 'src/styles/colors';
 
@@ -50,6 +51,7 @@ export const StatusBox: React.FC<StatusBoxProps> = ({
   status,
   consecutiveFailures,
 }) => {
+  const { t } = useTranslation();
   const statusInfo =
     status === 'Group'
       ? statusColors['Group']
@@ -81,7 +83,7 @@ export const StatusBox: React.FC<StatusBoxProps> = ({
         <></>
       )}
 
-      {status}
+      {t(`scheduled:status.${status.toLowerCase()}`)}
     </Box>
   );
 };

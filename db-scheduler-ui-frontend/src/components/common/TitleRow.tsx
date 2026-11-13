@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Box, HStack } from '@chakra-ui/react';
 
@@ -33,48 +34,51 @@ const TitleRow: React.FC<TitleRowProps> = ({
   setSortAsc,
   sortAsc,
   isDetailsView,
-}) => (
-  <HStack
-    display={'flex'}
-    p="8px 16px"
-    justifyContent={'space-around'}
-    spacing={5}
-  >
-    <Box
-      flex="1"
-      textAlign="left"
-      textColor={colors.primary['600']}
-      fontSize={'sm'}
+}) => {
+  const { t } = useTranslation();
+  return (
+    <HStack
+      display={'flex'}
+      p="8px 16px"
+      justifyContent={'space-around'}
+      spacing={5}
     >
-      Status
-    </Box>
-    {!isDetailsView && (
+      <Box
+        flex="1"
+        textAlign="left"
+        textColor={colors.primary['600']}
+        fontSize={'sm'}
+      >
+        {t('scheduled:columns.status')}
+      </Box>
+      {!isDetailsView && (
+        <SortButton
+          currentSort={currentSort}
+          setCurrentSort={setCurrentSort}
+          sortAsc={sortAsc}
+          setSortAsc={setSortAsc}
+          title={t('scheduled:columns.taskName')}
+          name={SortBy.Name}
+        />
+      )}
+      <Box
+        flex="2"
+        textAlign="left"
+        textColor={colors.primary['600']}
+        fontSize={'sm'}
+      >
+        {t('scheduled:columns.taskId')}
+      </Box>
       <SortButton
         currentSort={currentSort}
         setCurrentSort={setCurrentSort}
         sortAsc={sortAsc}
         setSortAsc={setSortAsc}
-        title={'Task Name'}
-        name={SortBy.Name}
+        title={t('scheduled:columns.nextExecutionTime')}
+        name={SortBy.Default}
       />
-    )}
-    <Box
-      flex="2"
-      textAlign="left"
-      textColor={colors.primary['600']}
-      fontSize={'sm'}
-    >
-      Task-ID
-    </Box>
-    <SortButton
-      currentSort={currentSort}
-      setCurrentSort={setCurrentSort}
-      sortAsc={sortAsc}
-      setSortAsc={setSortAsc}
-      title={'Next Execution Time'}
-      name={SortBy.Default}
-    />
-  </HStack>
-);
+    </HStack>
+  );
+};
 
 export default TitleRow;

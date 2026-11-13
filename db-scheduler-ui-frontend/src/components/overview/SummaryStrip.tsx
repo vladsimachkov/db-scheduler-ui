@@ -12,6 +12,7 @@
  * limitations under the License.
  */
 import { Box, Flex, Text, Wrap, WrapItem } from '@chakra-ui/react';
+import { useTranslation } from 'react-i18next';
 import { OverviewFilterKey } from 'src/utils/overviewFilters';
 import {
   instancesText,
@@ -35,26 +36,11 @@ interface FilterCard {
   hint: string;
 }
 
-const filterCards: FilterCard[] = [
-  {
-    key: 'failing',
-    label: 'Failing',
-    tone: colors.failed['200'],
-    hint: 'Show only tasks with failures',
-  },
-  {
-    key: 'running',
-    label: 'Running',
-    tone: colors.running['300'],
-    hint: 'Show only tasks running right now',
-  },
-  {
-    key: 'scheduled',
-    label: 'Scheduled',
-    tone: colors.primary['600'],
-    hint: 'Show only tasks with queued work',
-  },
-];
+const filterCardTones: Record<OverviewFilterKey, string> = {
+  failing: colors.failed['200'],
+  running: colors.running['300'],
+  scheduled: colors.primary['600'],
+};
 
 /**
  * Totals for the whole task set — always, regardless of what is filtered. Every cell is
@@ -68,40 +54,54 @@ export const SummaryStrip: React.FC<SummaryStripProps> = ({
   shownCount,
   onToggleFilter,
   onClearFilters,
-}) => (
-  <Flex align="center" justify="space-between" gap={4} wrap="wrap">
-    <Wrap spacing={3} role="group" aria-label="Task totals">
-      <WrapItem>
-        <StatCard
-          stat={summary.all}
-          label="Tasks"
-          tone={colors.primary['600']}
-          hint="Show all tasks"
-          active={activeFilters.length === 0}
-          onSelect={onClearFilters}
-        />
-      </WrapItem>
-      {filterCards.map((card) => (
-        <WrapItem key={card.key}>
+}) => {
+  const { t } = useTranslation();
+  const filterCards: FilterCard[] = (
+    ['failing', 'running', 'scheduled'] as OverviewFilterKey[]
+  ).map((key) => ({
+    key,
+    label: t(`overview:strip.${key}`),
+    tone: filterCardTones[key],
+    hint: t(`overview:strip.hint${key.charAt(0).toUpperCase()}${key.slice(1)}`),
+  }));
+
+  return (
+    <Flex align="center" justify="space-between" gap={4} wrap="wrap">
+      <Wrap spacing={3} role="group" aria-label={t('overview:strip.totalsAria')}>
+        <WrapItem>
           <StatCard
-            stat={summary[card.key]}
-            label={card.label}
-            tone={card.tone}
-            hint={card.hint}
-            active={activeFilters.includes(card.key)}
-            onSelect={() => onToggleFilter(card.key)}
+            stat={summary.all}
+            label={t('overview:strip.tasks')}
+            tone={colors.primary['600']}
+            hint={t('overview:strip.hintTasks')}
+            active={activeFilters.length === 0}
+            onSelect={onClearFilters}
           />
         </WrapItem>
-      ))}
-    </Wrap>
-    {activeFilters.length > 0 && (
-      <Text fontSize="sm" color={colors.primary['400']}>
-        Showing {shownCount} of {summary.all.tasks}{' '}
-        {summary.all.tasks === 1 ? 'task' : 'tasks'}
-      </Text>
-    )}
-  </Flex>
-);
+        {filterCards.map((card) => (
+          <WrapItem key={card.key}>
+            <StatCard
+              stat={summary[card.key]}
+              label={card.label}
+              tone={card.tone}
+              hint={card.hint}
+              active={activeFilters.includes(card.key)}
+              onSelect={() => onToggleFilter(card.key)}
+            />
+          </WrapItem>
+        ))}
+      </Wrap>
+      {activeFilters.length > 0 && (
+        <Text fontSize="sm" color={colors.primary['400']}>
+          {t('overview:strip.showing', {
+            shown: shownCount,
+            count: summary.all.tasks,
+          })}
+        </Text>
+      )}
+    </Flex>
+  );
+};
 
 interface StatCardProps {
   stat: OverviewStat;

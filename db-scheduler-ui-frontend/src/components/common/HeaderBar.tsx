@@ -35,6 +35,7 @@ import colors from 'src/styles/colors';
 import { RunAllAlert } from 'src/components/scheduled/RunAllAlert';
 import { TaskDetailsRequestParams } from 'src/models/TaskRequestParams';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useDebouncedCallback } from 'src/hooks/useDebouncedCallback';
 
 interface HeaderBarProps {
@@ -66,6 +67,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   taskInstanceExactMatch,
   params,
 }) => {
+  const { t } = useTranslation();
   const { taskName: urlTaskName } = useParams<{ taskName?: string }>();
   const isDetailsView = !!urlTaskName;
   const [isOpen, setIsOpen] = React.useState('');
@@ -105,7 +107,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     setIsOpen('scheduled');
                   }}
                 >
-                  Run all
+                  {t('scheduled:headerBar.runAll')}
                 </Button>
                 <Button
                   leftIcon={<RepeatIcon boxSize={6} />}
@@ -119,7 +121,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     setIsOpen('failed');
                   }}
                 >
-                  Rerun all failed
+                  {t('scheduled:headerBar.rerunAllFailed')}
                 </Button>
                 <RunAllAlert
                   taskName={taskName}
@@ -135,7 +137,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
             {!isDetailsView && (
               <VStack align="start">
                 <Input
-                  placeholder={'Search for task name'}
+                  placeholder={t('scheduled:search.taskName')}
                   defaultValue={taskName}
                   onChange={(e) =>
                     debouncedSetSearchTermTaskName(e.currentTarget.value)
@@ -159,13 +161,13 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                     },
                   }}
                 >
-                  Exact match
+                  {t('scheduled:search.exactMatch')}
                 </Checkbox>
               </VStack>
             )}
             <VStack align="start" spacing={2}>
               <Input
-                placeholder={'Search for task id'}
+                placeholder={t('scheduled:search.taskId')}
                 defaultValue={taskInstance}
                 onChange={(e) =>
                   debouncedSetSearchTermTaskInstance(e.currentTarget.value)
@@ -189,7 +191,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                   },
                 }}
               >
-                Exact match
+                {t('scheduled:search.exactMatch')}
               </Checkbox>
             </VStack>
           </HStack>

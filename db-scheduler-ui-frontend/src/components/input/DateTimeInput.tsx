@@ -14,8 +14,10 @@
 import DatePickerImport from 'react-datepicker';
 import { Box } from '@chakra-ui/react';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useTranslation } from 'react-i18next';
 import colors from 'src/styles/colors';
 import { interopDefault } from 'src/utils/interopDefault';
+import { dateFnsLocale } from 'src/i18n';
 
 // react-datepicker v4 is CommonJS; under Vite 8's interop the default import resolves to the
 // module namespace rather than the component. See interopDefault.
@@ -32,6 +34,7 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
   onChange,
   forceFutureTime,
 }) => {
+  const { t } = useTranslation();
   return (
     <Box
       p={1}
@@ -45,9 +48,10 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
         selected={selectedDate}
         onChange={onChange}
         showTimeSelect
+        locale={dateFnsLocale()}
         timeFormat={'HH:mm'}
-        dateFormat={'yyyy-MM-dd HH:mm'}
-        placeholderText={'YYYY-MM-DD HH:mm'}
+        dateFormat={t('common:dateTime.format')}
+        placeholderText={t('common:dateTime.placeholder')}
         useWeekdaysShort
         minTime={
           selectedDate?.toDateString() === new Date().toDateString() &&

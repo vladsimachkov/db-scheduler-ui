@@ -14,6 +14,7 @@
 import { Box, Button } from '@chakra-ui/react';
 import { RepeatIcon } from '@chakra-ui/icons';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import colors from 'src/styles/colors';
 import {
   InfiniteData,
@@ -42,6 +43,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
   pollKey,
   params,
 }) => {
+  const { t } = useTranslation();
   const { data, refetch: repoll } = useQuery(
     [
       pollKey,
@@ -89,7 +91,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
         fontWeight="normal"
         rightIcon={<RepeatIcon boxSize={'7'} />}
       >
-        <Box textAlign={'left'}>Refresh</Box>
+        <Box textAlign={'left'}>{t('common:refresh.label')}</Box>
       </Button>
       <Box
         pos="absolute"
@@ -103,7 +105,9 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
           number={data?.newFailures ?? 0}
           color={colors.failed['200']}
           visible={data?.newFailures !== 0 && data?.newFailures !== undefined}
-          hoverText=" failed since refresh"
+          hoverText={t('common:refresh.failedSince', {
+            count: data?.newFailures ?? 0,
+          })}
         />
         {data?.newSucceeded ? (
           <RefreshCircle
@@ -112,14 +116,18 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
             visible={
               data?.newSucceeded !== 0 && data?.newSucceeded !== undefined
             }
-            hoverText=" succeeded since refresh"
+            hoverText={t('common:refresh.succeededSince', {
+              count: data?.newSucceeded ?? 0,
+            })}
           />
         ) : (
           <RefreshCircle
             number={data?.newRunning ?? 0}
             color={colors.running['300']}
             visible={data?.newRunning !== 0 && data?.newRunning !== undefined}
-            hoverText=" running since refresh"
+            hoverText={t('common:refresh.runningSince', {
+              count: data?.newRunning ?? 0,
+            })}
           />
         )}
 
@@ -128,7 +136,9 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
           color={colors.primary['300']}
           textColor={colors.primary['900']}
           visible={data?.newTasks !== 0 && data?.newTasks !== undefined}
-          hoverText=" added since refresh"
+          hoverText={t('common:refresh.addedSince', {
+            count: data?.newTasks ?? 0,
+          })}
         />
       </Box>
     </Box>

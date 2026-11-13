@@ -32,9 +32,11 @@ export const RefreshCircle: React.FC<RefreshCircleProps> = ({
 }) => {
   const [hovered, setHovered] = useState(false);
 
-  const text = hovered ? hoverText : '';
+  // hoverText is the full hover label, count included, so each language can put the
+  // number where its grammar needs it (and decline the noun around it).
+  const display = hovered ? hoverText : `${number}`;
 
-  const powerOfTen = (number + hoverText).length - 1;
+  const powerOfTen = Math.max(hoverText.length, `${number}`.length) - 1;
   const isExpanded = 1 <= powerOfTen;
   const baseSize: number = 22;
   const width = isExpanded ? baseSize + 7 * powerOfTen : baseSize;
@@ -56,7 +58,7 @@ export const RefreshCircle: React.FC<RefreshCircleProps> = ({
         onMouseLeave={() => setHovered(false)}
       >
         <NumberCircle
-          number={number + text}
+          number={display}
           bgColor={color}
           textColor={textColor}
           position="relative"

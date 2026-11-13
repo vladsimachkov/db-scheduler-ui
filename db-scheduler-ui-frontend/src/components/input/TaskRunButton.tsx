@@ -16,6 +16,7 @@ import runTask from 'src/services/runTask';
 import { PlayIcon, RepeatIcon } from '../../assets/icons';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Task } from 'src/models/Task';
 import { isStatus } from 'src/utils/determineStatus';
 import colors from 'src/styles/colors';
@@ -27,6 +28,7 @@ interface TaskRunButtonProps extends Task {
 }
 
 export const TaskRunButton: React.FC<TaskRunButtonProps> = (props) => {
+  const { t } = useTranslation();
   const { taskInstance, taskName, pickedBy, style, refetch } = props;
   const navigate = useNavigate();
   return (
@@ -89,10 +91,10 @@ export const TaskRunButton: React.FC<TaskRunButtonProps> = (props) => {
           }
         >
           {isStatus('Group', props)
-            ? 'Show all'
+            ? t('scheduled:runButton.showAll')
             : isStatus('Failed', props)
-            ? 'Rerun'
-            : 'Run'}
+            ? t('scheduled:runButton.rerun')
+            : t('scheduled:runButton.run')}
         </Button>
       )}
     </>

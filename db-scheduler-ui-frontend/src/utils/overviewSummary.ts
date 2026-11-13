@@ -13,6 +13,7 @@
  */
 import { OverviewTask } from 'src/models/OverviewTask';
 import { matchesFilter, OverviewFilterKey } from 'src/utils/overviewFilters';
+import i18n from 'src/i18n';
 
 /**
  * Every stat is a pair: how many **tasks** are in that state, and how many **instances**
@@ -44,7 +45,7 @@ export const summarizeOverview = (tasks: OverviewTask[]): OverviewSummary => ({
 });
 
 export const instancesText = (count: number): string =>
-  `${count} ${count === 1 ? 'instance' : 'instances'}`;
+  i18n.t('overview:instances', { count });
 
 const stat = (tasks: OverviewTask[], key: OverviewFilterKey): OverviewStat => ({
   tasks: tasks.filter((task) => matchesFilter(task, key)).length,

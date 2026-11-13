@@ -21,6 +21,7 @@ import {
   Button,
 } from '@chakra-ui/react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import runTaskGroup from 'src/services/runTaskGroup';
 import colors from 'src/styles/colors';
 
@@ -40,6 +41,7 @@ export const RunAllAlert: React.FC<TaskProps> = ({
   setIsopen,
   refetch,
 }) => {
+  const { t } = useTranslation();
   const cancelRef = React.useRef(null);
   return (
     <AlertDialog
@@ -50,14 +52,15 @@ export const RunAllAlert: React.FC<TaskProps> = ({
       <AlertDialogOverlay>
         <AlertDialogContent>
           <AlertDialogHeader fontSize="lg" fontWeight="bold">
-            {onlyFailed ? 'Rerun All Failed' : 'Run All'}
+            {onlyFailed
+              ? t('scheduled:runAllAlert.titleRerunFailed')
+              : t('scheduled:runAllAlert.titleRun')}
           </AlertDialogHeader>
 
           <AlertDialogBody>
-            Are you sure you want to
-            {onlyFailed ? ' rerun all failed' : ' run all'} tasks with taskname:
-            {' ' + taskName}. This will include the ones outside of your current
-            filters and search.
+            {onlyFailed
+              ? t('scheduled:runAllAlert.bodyRerunFailed', { taskName })
+              : t('scheduled:runAllAlert.bodyRun', { taskName })}
           </AlertDialogBody>
 
           <AlertDialogFooter>
@@ -66,7 +69,7 @@ export const RunAllAlert: React.FC<TaskProps> = ({
                 setIsopen('');
               }}
             >
-              Cancel
+              {t('common:cancel')}
             </Button>
             <Button
               bgColor={onlyFailed ? colors.running[300] : colors.running[100]}
@@ -89,7 +92,9 @@ export const RunAllAlert: React.FC<TaskProps> = ({
               }}
               ml={3}
             >
-              {onlyFailed ? 'Rerun All' : 'Run All'}
+              {onlyFailed
+                ? t('scheduled:runAllAlert.buttonRerunFailed')
+                : t('scheduled:runAllAlert.buttonRun')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

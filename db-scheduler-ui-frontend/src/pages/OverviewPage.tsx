@@ -42,13 +42,11 @@ import {
   isBefore,
 } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import i18n, { dateFnsLocale } from 'src/i18n';
 
-const statusText: Record<OverviewTaskStatus, string> = {
-  FAILING: 'failing',
-  RUNNING: 'running',
-  SCHEDULED: 'scheduled',
-  DORMANT: 'dormant',
-};
+const statusText = (status: OverviewTaskStatus): string =>
+  i18n.t(`overview:status.${status.toLowerCase()}`);
 
 const statusColors: Record<OverviewTaskStatus, string> = {
   FAILING: colors.failed['200'],
@@ -60,6 +58,7 @@ const statusColors: Record<OverviewTaskStatus, string> = {
 const overdueColor = '#725200';
 
 export const OverviewPage: React.FC = () => {
+  const { t } = useTranslation();
   const {
     data = [],
     isLoading,
@@ -75,7 +74,7 @@ export const OverviewPage: React.FC = () => {
     <Box>
       <Stack spacing={4} pt={10} pb={2}>
         <Heading as="h1" size="lg" color={colors.primary['600']}>
-          All tasks
+          {t('overview:title')}
         </Heading>
         {loaded && (
           <SummaryStrip
@@ -94,8 +93,8 @@ export const OverviewPage: React.FC = () => {
           sx={{ borderCollapse: 'separate', borderSpacing: '0 8px' }}
         >
           <Tbody>
-            {isLoading && <MessageRow message="Loading tasks" />}
-            {isError && <MessageRow message="Could not load tasks" />}
+            {isLoading && <MessageRow message={t('overview:loading')} />}
+            {isError && <MessageRow message={t('overview:error')} />}
             {loaded && (
               <>
                 {visibleTasks.length > 0 && <ColumnLabels />}
@@ -103,7 +102,7 @@ export const OverviewPage: React.FC = () => {
                   <OverviewRow key={task.taskName} task={task} />
                 ))}
                 {tasks.length > 0 && visibleTasks.length === 0 && (
-                  <MessageRow message="No tasks match the active filters" />
+                  <MessageRow message={t('overview:noMatch')} />
                 )}
               </>
             )}
@@ -127,17 +126,20 @@ const columnLabelSx = {
   pb: 2,
 };
 
-const ColumnLabels: React.FC = () => (
-  <Tr>
-    <Td sx={columnLabelSx}>Task</Td>
-    <Td sx={columnLabelSx} width="18%">
-      Next run
-    </Td>
-    <Td sx={columnLabelSx} width="18%">
-      Last run
-    </Td>
-  </Tr>
-);
+const ColumnLabels: React.FC = () => {
+  const { t } = useTranslation();
+  return (
+    <Tr>
+      <Td sx={columnLabelSx}>{t('overview:columns.task')}</Td>
+      <Td sx={columnLabelSx} width="18%">
+        {t('overview:columns.nextRun')}
+      </Td>
+      <Td sx={columnLabelSx} width="18%">
+        {t('overview:columns.lastRun')}
+      </Td>
+    </Tr>
+  );
+};
 
 const OverviewRow: React.FC<{ task: OverviewTask }> = ({ task }) => {
   const navigate = useNavigate();
@@ -197,8 +199,8 @@ const TaskTypeIcon: React.FC<{ task: OverviewTask }> = ({ task }) =>
     <Box
       as="span"
       role="img"
-      aria-label="Recurring task"
-      title="Recurring task"
+      aria-label={i18n.t('overview:recurringAria')}
+      title={i18n.t('overview:recurringAria')}
       display="flex"
       alignItems="center"
       flexShrink={0}
@@ -265,9 +267,21 @@ function subLine(task: OverviewTask) {
     return (
       <HStack spacing={1} flexWrap="wrap">
         <Text as="span">{instancesText(task.instanceCount)}</Text>
-        {countPart(task.counts.failing, 'failing', colors.failed['200'])}
-        {countPart(task.counts.running, 'running', colors.running['300'])}
-        {countPart(task.counts.scheduled, 'scheduled', colors.primary['500'])}
+        {countPart(
+          task.counts.failing,
+          statusText('FAILING'),
+          colors.failed['200'],
+        )}
+        {countPart(
+          task.counts.running,
+          statusText('RUNNING'),
+          colors.running['300'],
+        )}
+        {countPart(
+          task.counts.scheduled,
+          statusText('SCHEDULED'),
+          colors.primary['500'],
+        )}
       </HStack>
     );
   }
@@ -278,12 +292,16 @@ function subLine(task: OverviewTask) {
   // Spells out what the repeat icon marks. Only recurring is stated: a null `recurring`
   // means the server could not classify the task, not that it is one-time.
   if (task.recurring === true) {
-    parts.push('recurring');
+    parts.push(i18n.t('overview:recurring'));
   }
 
   if (task.worstStatus !== 'DORMANT') {
-    const base = statusText[task.worstStatus];
-    parts.push(duration ? `${base} for ${duration}` : base);
+    const base = statusText(task.worstStatus);
+    parts.push(
+      duration
+        ? i18n.t('overview:forDuration', { base, duration })
+        : base,
+    );
   }
 
   if (task.recurring !== true) {
@@ -295,7 +313,9 @@ function subLine(task: OverviewTask) {
 
 function statusDuration(task: OverviewTask): string | null {
   if (task.worstStatus === 'FAILING' && task.lastSuccess) {
-    return formatDistanceStrict(new Date(task.lastSuccess), new Date());
+    return formatDistanceStrict(new Date(task.lastSuccess), new Date(), {
+      locale: dateFnsLocale(),
+    });
   }
 
   if (
@@ -303,7 +323,9 @@ function statusDuration(task: OverviewTask): string | null {
     task.instanceCount === 1 &&
     task.nextExecutionTime
   ) {
-    return formatDistanceStrict(new Date(task.nextExecutionTime), new Date());
+    return formatDistanceStrict(new Date(task.nextExecutionTime), new Date(), {
+      locale: dateFnsLocale(),
+    });
   }
 
   return null;
@@ -315,12 +337,16 @@ function nextRunText(task: OverviewTask): string {
   }
 
   if (task.counts.running > 0) {
-    return 'running now';
+    return i18n.t('overview:runningNow');
   }
 
   const date = new Date(task.nextExecutionTime);
-  const distance = formatDistanceToNowStrict(date);
-  return isBefore(date, new Date()) ? `due ${distance} ago` : `in ${distance}`;
+  const distance = formatDistanceToNowStrict(date, {
+    locale: dateFnsLocale(),
+  });
+  return isBefore(date, new Date())
+    ? i18n.t('overview:dueAgo', { distance })
+    : i18n.t('overview:inFuture', { distance });
 }
 
 function lastRunText(task: OverviewTask) {
@@ -349,8 +375,13 @@ function lastRunText(task: OverviewTask) {
       color={lastWasFailure ? colors.failed['200'] : colors.success['200']}
       fontWeight={lastWasFailure ? 'semibold' : 'normal'}
     >
-      {lastWasFailure ? 'last failure' : 'last success'}{' '}
-      {formatDistanceToNowStrict(date, { addSuffix: true })}
+      {lastWasFailure
+        ? i18n.t('overview:lastFailure')
+        : i18n.t('overview:lastSuccess')}{' '}
+      {formatDistanceToNowStrict(date, {
+        addSuffix: true,
+        locale: dateFnsLocale(),
+      })}
     </Text>
   );
 }

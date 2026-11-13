@@ -14,6 +14,7 @@
 import { Accordion, Box, Button, Flex, HStack, Text } from '@chakra-ui/react';
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { LogCard } from 'src/components/history/LogCard';
 import { DateTimeInput } from 'src/components/input/DateTimeInput';
 import { SortButton } from 'src/components/input/SortButton';
@@ -25,6 +26,7 @@ import colors from 'src/styles/colors';
 import { HeaderBar } from '../common/HeaderBar';
 
 export const LogList: React.FC = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const { taskName, taskInstance } = location.state || {};
 
@@ -82,7 +84,7 @@ export const LogList: React.FC = () => {
   return (
     <Box>
       <HeaderBar
-        title={'History'}
+        title={t('history:title')}
         params={{
           filter: currentFilter,
           asc: sortAsc,
@@ -129,18 +131,18 @@ export const LogList: React.FC = () => {
         fontSize={'sm'}
         textAlign="left"
       >
-        <Box flex="1">Status</Box>
-        <Box flex={2}>Task Name</Box>
-        <Box flex="2">Task-ID</Box>
+        <Box flex="1">{t('history:columns.status')}</Box>
+        <Box flex={2}>{t('history:columns.taskName')}</Box>
+        <Box flex="2">{t('history:columns.taskId')}</Box>
         <SortButton
           currentSort={currentSort}
           setCurrentSort={setCurrentSort}
           sortAsc={sortAsc}
           setSortAsc={setSortAsc}
-          title={'Time Finished'}
+          title={t('history:columns.timeFinished')}
           name={SortBy.Default}
         ></SortButton>
-        <Box flex="2">Exception Message</Box>
+        <Box flex="2">{t('history:columns.exceptionMessage')}</Box>
         <Box flex="0.2" />
       </HStack>
       <Accordion allowMultiple>
@@ -161,10 +163,10 @@ export const LogList: React.FC = () => {
           mb={24}
         >
           {isFetchingNextPage
-            ? 'Loading...'
+            ? t('common:loading')
             : hasNextPage
-            ? 'Load More'
-            : 'Nothing more to load'}
+            ? t('common:loadMore')
+            : t('common:nothingMore')}
         </Button>
       </Flex>
     </Box>

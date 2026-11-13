@@ -25,6 +25,7 @@ import React from 'react';
 import { DotButton } from 'src/components/input/DotButton';
 import { dateFormatText } from 'src/utils/dateFormatText';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Task } from 'src/models/Task';
 import { NumberCircleGroup } from 'src/components/common/NumberCircleGroup';
 import { AttachmentIcon } from '@chakra-ui/icons';
@@ -47,6 +48,7 @@ export const TaskAccordionButton: React.FC<TaskAccordionButtonProps> = (
     taskData,
     refetch,
   } = props;
+  const { t } = useTranslation();
   const { taskName: isDetailsView } = useParams<{ taskName?: string }>();
   const navigate = useNavigate();
   return (
@@ -107,7 +109,7 @@ export const TaskAccordionButton: React.FC<TaskAccordionButtonProps> = (
             </Text>
             {isStatus('Group', props) && (
               <Text minWidth={28} color={colors.primary['500']}>
-                {` + ${taskInstance.length - 1} more`}
+                {t('scheduled:group.more', { count: taskInstance.length - 1 })}
               </Text>
             )}
           </Flex>

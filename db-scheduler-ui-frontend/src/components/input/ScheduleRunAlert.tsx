@@ -21,6 +21,7 @@ import {
   Button,
 } from '@chakra-ui/react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import colors from 'src/styles/colors';
 import { DateTimeInput } from './DateTimeInput';
 import runTask from 'src/services/runTask';
@@ -42,6 +43,7 @@ export const ScheduleRunAlert: React.FC<TaskProps> = ({
   setIsopen,
   refetch,
 }) => {
+  const { t } = useTranslation();
   const cancelRef = React.useRef(null);
   const [time, setTime] = React.useState<Date | null>(new Date());
 
@@ -54,7 +56,9 @@ export const ScheduleRunAlert: React.FC<TaskProps> = ({
       <AlertDialogOverlay>
         <AlertDialogContent>
           <AlertDialogHeader fontSize="lg" fontWeight="bold">
-            {failed ? 'Rerun Task At Time' : 'Run Task At Time'}
+            {failed
+              ? t('scheduled:scheduleRunAlert.titleRerun')
+              : t('scheduled:scheduleRunAlert.titleRun')}
           </AlertDialogHeader>
 
           <AlertDialogBody p={4}>
@@ -71,7 +75,7 @@ export const ScheduleRunAlert: React.FC<TaskProps> = ({
                 setIsopen(false);
               }}
             >
-              Cancel
+              {t('common:cancel')}
             </Button>
             <Button
               bgColor={failed ? colors.running[300] : colors.running[100]}
@@ -95,7 +99,9 @@ export const ScheduleRunAlert: React.FC<TaskProps> = ({
               }}
               ml={3}
             >
-              {failed ? 'Update Rerun Time' : 'Update Run Time'}
+              {failed
+                ? t('scheduled:scheduleRunAlert.buttonRerun')
+                : t('scheduled:scheduleRunAlert.buttonRun')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -25,12 +25,14 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
+  useToast,
 } from '@chakra-ui/react';
 import deleteTask from 'src/services/deleteTask';
 import React from 'react';
 import { CalendarIcon, DeleteIcon, InfoOutlineIcon } from '@chakra-ui/icons';
 import { IoEllipsisVerticalIcon } from '../../assets/icons';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ScheduleRunAlert } from './ScheduleRunAlert';
 import { getReadonly } from 'src/utils/config';
 
@@ -47,9 +49,11 @@ export const DotButton: React.FC<TaskProps> = ({
   style,
   refetch,
 }) => {
+  const { t } = useTranslation();
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [scheduleOpen, setScheduleOpen] = React.useState(false);
   const navigate = useNavigate();
+  const toast = useToast();
   const onClose = () => setDeleteOpen(false);
   const cancelRef = React.useRef(null);
   return (
@@ -58,7 +62,7 @@ export const DotButton: React.FC<TaskProps> = ({
         <MenuButton
           as={IconButton}
           rounded={6}
-          aria-label="Options"
+          aria-label={t('scheduled:dotButton.optionsAria')}
           variant="outline"
           icon={<IoEllipsisVerticalIcon />}
           onClick={(event) => event.stopPropagation()}
@@ -75,7 +79,7 @@ export const DotButton: React.FC<TaskProps> = ({
             }}
             icon={<CalendarIcon boxSize={4} />}
           >
-            Update execution time
+            {t('scheduled:dotButton.updateExecutionTime')}
           </MenuItem>
           <MenuItem
             rounded={6}
@@ -86,7 +90,7 @@ export const DotButton: React.FC<TaskProps> = ({
             }}
             icon={<InfoOutlineIcon boxSize={4} />}
           >
-            See history for task
+            {t('scheduled:dotButton.seeHistory')}
           </MenuItem>
           <MenuItem
             display={getReadonly() ? 'none' : 'unset'}
@@ -98,7 +102,7 @@ export const DotButton: React.FC<TaskProps> = ({
             }}
             icon={<DeleteIcon boxSize={4} />}
           >
-            Delete task
+            {t('scheduled:dotButton.deleteTask')}
           </MenuItem>
         </MenuList>
       </Menu>
@@ -118,11 +122,14 @@ export const DotButton: React.FC<TaskProps> = ({
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize="lg" fontWeight="bold">
-              Delete
+              {t('common:delete')}
             </AlertDialogHeader>
 
             <AlertDialogBody>
-              Are you sure you want to delete, {taskName} Task-ID:{taskInstance}
+              {t('scheduled:deleteAlert.body', {
+                taskName,
+                taskInstance,
+              })}
             </AlertDialogBody>
 
             <AlertDialogFooter>
@@ -133,18 +140,29 @@ export const DotButton: React.FC<TaskProps> = ({
                   onClose();
                 }}
               >
-                Cancel
+                {t('common:cancel')}
               </Button>
               <Button
                 colorScheme="red"
                 onClick={(event) => {
                   event.stopPropagation();
-                  deleteTask(taskInstance, taskName);
-                  onClose();
+                  deleteTask(taskInstance, taskName)
+                    .catch(() => {
+                      toast({
+                        title: t('scheduled:deleteAlert.deleteFailed'),
+                        status: 'error',
+                        duration: 4000,
+                        position: 'top',
+                      });
+                    })
+                    .finally(() => {
+                      onClose();
+                      refetch?.();
+                    });
                 }}
                 ml={3}
               >
-                Delete
+                {t('common:delete')}
               </Button>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -14,6 +14,7 @@
 import React from 'react';
 import { Accordion, Box, Button, Flex } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { isStatus } from 'src/utils/determineStatus';
 import TaskCard from 'src/components/scheduled/TaskCard';
 import TaskGroupCard from './TaskGroupCard';
@@ -26,6 +27,7 @@ import { HeaderBar } from 'src/components/common/HeaderBar';
 import { TasksResponse } from 'src/models/TasksResponse';
 
 const TaskList: React.FC = () => {
+  const { t } = useTranslation();
   const { taskName } = useParams<{ taskName?: string }>();
   const isDetailsView = !!taskName;
 
@@ -62,7 +64,7 @@ const TaskList: React.FC = () => {
   return (
     <Box>
       <HeaderBar
-        title={isDetailsView ? taskName : 'All Tasks'}
+        title={isDetailsView ? taskName : t('scheduled:allTasks')}
         params={{
           filter: currentFilter,
           asc: sortAsc,
@@ -115,10 +117,10 @@ const TaskList: React.FC = () => {
           mb={24}
         >
           {isFetchingNextPage
-            ? 'Loading...'
+            ? t('common:loading')
             : hasNextPage
-            ? 'Load More'
-            : 'Nothing more to load'}
+            ? t('common:loadMore')
+            : t('common:nothingMore')}
         </Button>
       </Flex>
     </Box>

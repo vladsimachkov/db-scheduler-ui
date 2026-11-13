@@ -20,6 +20,7 @@ import {
   MenuList,
 } from '@chakra-ui/react';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import colors from 'src/styles/colors';
 import { FilterBy } from 'src/models/QueryParams';
@@ -29,6 +30,7 @@ export const FilterBox: React.FC<{
   setCurrentFilter: (filter: FilterBy) => void;
   history?: boolean;
 }> = ({ currentFilter, setCurrentFilter, history }) => {
+  const { t } = useTranslation();
   const filters = history
     ? [FilterBy.All, FilterBy.Failed, FilterBy.Succeeded]
     : [FilterBy.All, FilterBy.Failed, FilterBy.Running, FilterBy.Scheduled];
@@ -54,7 +56,9 @@ export const FilterBox: React.FC<{
           fontWeight={'normal'}
           ml={14}
         >
-          Status: {currentFilter}
+          {t('scheduled:filters.status', {
+            filter: t(`scheduled:filters.${currentFilter.toLowerCase()}`),
+          })}
         </MenuButton>
         <MenuList p={0}>
           {filters.map((filterValue) => (
@@ -63,7 +67,7 @@ export const FilterBox: React.FC<{
               onClick={() => setCurrentFilter(filterValue)}
               fontWeight={currentFilter === filterValue ? 'bold' : 'normal'}
             >
-              {filterValue}
+              {t(`scheduled:filters.${filterValue.toLowerCase()}`)}
             </MenuItem>
           ))}
         </MenuList>
