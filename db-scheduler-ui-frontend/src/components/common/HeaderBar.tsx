@@ -31,7 +31,6 @@ import { Task } from 'src/models/Task';
 import { POLL_LOGS_QUERY_KEY, pollLogs } from 'src/services/pollLogs';
 import { POLL_TASKS_QUERY_KEY, pollTasks } from 'src/services/pollTasks';
 import { PlayIcon, RepeatIcon } from 'src/assets/icons';
-import colors from 'src/styles/colors';
 import { RunAllAlert } from 'src/components/scheduled/RunAllAlert';
 import { TaskDetailsRequestParams } from 'src/models/TaskRequestParams';
 import { useParams } from 'react-router-dom';
@@ -97,10 +96,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
               <>
                 <Button
                   leftIcon={<PlayIcon />}
-                  bgColor={colors.running['100']}
-                  textColor={colors.running['500']}
-                  _hover={{ backgroundColor: colors.running['200'] }}
-                  _active={{ backgroundColor: colors.running['100'] }}
+                  bgColor={'runningFill'}
+                  textColor={'runningText'}
+                  _hover={{ backgroundColor: 'runningFillHover' }}
+                  _active={{ backgroundColor: 'runningFill' }}
                   ml={5}
                   minW={'6em'}
                   onClick={() => {
@@ -111,10 +110,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 </Button>
                 <Button
                   leftIcon={<RepeatIcon boxSize={6} />}
-                  bgColor={colors.running['300']}
-                  textColor={colors.primary['100']}
-                  _hover={{ backgroundColor: colors.running['400'] }}
-                  _active={{ backgroundColor: colors.running['300'] }}
+                  bgColor={'runningSolid'}
+                  textColor={'textOnSolid'}
+                  _hover={{ backgroundColor: 'runningSolidHover' }}
+                  _active={{ backgroundColor: 'runningSolid' }}
                   mx={5}
                   minW={'10em'}
                   onClick={() => {
@@ -142,7 +141,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                   onChange={(e) =>
                     debouncedSetSearchTermTaskName(e.currentTarget.value)
                   }
-                  bgColor={colors.primary['100']}
+                  bgColor={'surface'}
                   w={'20vmax'}
                   mt={7}
                   ml={1}
@@ -153,10 +152,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                   onChange={(e) => setTaskNameExactMatch(e.target.checked)}
                   sx={{
                     '.chakra-checkbox__control': {
-                      bg: colors.primary['100'],
+                      bg: 'surface',
                       _checked: {
-                        bg: colors.primary['500'],
-                        borderColor: colors.primary['500'],
+                        bg: 'controlChecked',
+                        borderColor: 'controlChecked',
                       },
                     },
                   }}
@@ -172,7 +171,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 onChange={(e) =>
                   debouncedSetSearchTermTaskInstance(e.currentTarget.value)
                 }
-                bgColor={colors.primary['100']}
+                bgColor={'surface'}
                 w={'20vmax'}
                 mt={7}
                 ml={1}
@@ -183,10 +182,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
                 onChange={(e) => setTaskInstanceExactMatch(e.target.checked)}
                 sx={{
                   '.chakra-checkbox__control': {
-                    bg: colors.primary['100'],
+                    bg: 'surface',
                     _checked: {
-                      bg: colors.primary['500'],
-                      borderColor: colors.primary['500'],
+                      bg: 'controlChecked',
+                      borderColor: 'controlChecked',
                     },
                   },
                 }}

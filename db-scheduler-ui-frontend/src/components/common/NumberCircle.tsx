@@ -13,7 +13,6 @@
  */
 import { Box, ResponsiveValue } from '@chakra-ui/react';
 import { Property } from 'csstype';
-import colors from 'src/styles/colors';
 
 interface NumberCircleProps {
   number: number | string;
@@ -56,11 +55,11 @@ export const NumberCircle: React.FC<NumberCircleProps> = ({
       right={`${leftOffset}px`}
       width={`${width}px`}
       height={`${height}px`}
-      backgroundColor={bgColor ?? colors.running['100']}
+      backgroundColor={bgColor ?? 'runningFill'}
       display="flex"
       justifyContent="center"
       alignItems={'center'}
-      color={textColor ?? colors.primary['100']}
+      color={textColor ?? 'textOnSolid'}
       transform={transform}
       fontSize={'sm'}
       style={style}

@@ -25,7 +25,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogoIcon } from 'src/assets/icons/Logo';
 import { ColorModeToggle } from 'src/components/common/ColorModeToggle';
-import colors from 'src/styles/colors';
 import {
   getShowHistory,
   getShowOverview,
@@ -54,7 +53,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
 
   return (
     <Box
-      backgroundColor={colors.primary['100']}
+      backgroundColor={'surface'}
       display={'flex'}
       alignItems={'center'}
       flexWrap={'wrap'}
@@ -64,7 +63,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
         as={'button'}
         onClick={() => navigate('/')}
         aria-label={t('common:nav.homeAria')}
-        color={colors.dbBlue}
+        color={'brand'}
         fontSize={'2xl'}
         p={4}
         fontWeight={'semibold'}
@@ -82,19 +81,19 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
           <>
             <Button
               _hover={{
-                bgColor: colors.primary['100'],
-                borderColor: colors.dbBlue,
-                color: colors.primary['400'],
+                bgColor: 'surface',
+                borderColor: 'brand',
+                color: 'textMuted',
               }}
               _active={{
-                borderColor: colors.primary['200'],
-                color: colors.primary['300'],
+                borderColor: 'surfaceSubtle',
+                color: 'textFaint',
               }}
-              bgColor={colors.primary['100']}
-              color={colors.dbBlue}
+              bgColor={'surface'}
+              color={'brand'}
               borderBottom="2px"
               borderRadius={'0'}
-              borderColor={isScheduled ? colors.dbBlue : colors.primary['300']}
+              borderColor={isScheduled ? 'brand' : 'border'}
               onClick={() => navigate(scheduledPath)}
               aria-label={t('common:nav.scheduledAria')}
             >
@@ -103,19 +102,19 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             {showHistory && (
               <Button
                 _hover={{
-                  bgColor: colors.primary['100'],
-                  borderColor: colors.dbBlue,
-                  color: colors.primary['400'],
+                  bgColor: 'surface',
+                  borderColor: 'brand',
+                  color: 'textMuted',
                 }}
                 _active={{
-                  borderColor: colors.running['200'],
-                  color: colors.primary['300'],
+                  borderColor: 'runningFillHover',
+                  color: 'textFaint',
                 }}
-                bgColor={colors.primary['100']}
-                color={colors.dbBlue}
+                bgColor={'surface'}
+                color={'brand'}
                 borderBottom="2px"
                 borderRadius={'0'}
-                borderColor={isHistory ? colors.dbBlue : colors.primary['300']}
+                borderColor={isHistory ? 'brand' : 'border'}
                 onClick={() => navigate(`/history/all`)}
                 aria-label={t('common:nav.historyAria')}
               >
@@ -125,19 +124,19 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             {showOverview && (
               <Button
                 _hover={{
-                  bgColor: colors.primary['100'],
-                  borderColor: colors.dbBlue,
-                  color: colors.primary['400'],
+                  bgColor: 'surface',
+                  borderColor: 'brand',
+                  color: 'textMuted',
                 }}
                 _active={{
-                  borderColor: colors.primary['200'],
-                  color: colors.primary['300'],
+                  borderColor: 'surfaceSubtle',
+                  color: 'textFaint',
                 }}
-                bgColor={colors.primary['100']}
-                color={colors.dbBlue}
+                bgColor={'surface'}
+                color={'brand'}
                 borderBottom="2px"
                 borderRadius={'0'}
-                borderColor={isOverview ? colors.dbBlue : colors.primary['300']}
+                borderColor={isOverview ? 'brand' : 'border'}
                 onClick={() => navigate('/overview')}
                 aria-label={t('common:nav.overviewAria')}
               >
@@ -147,19 +146,19 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             {showSql && (
               <Button
                 _hover={{
-                  bgColor: colors.primary['100'],
-                  borderColor: colors.dbBlue,
-                  color: colors.primary['400'],
+                  bgColor: 'surface',
+                  borderColor: 'brand',
+                  color: 'textMuted',
                 }}
                 _active={{
-                  borderColor: colors.primary['200'],
-                  color: colors.primary['300'],
+                  borderColor: 'surfaceSubtle',
+                  color: 'textFaint',
                 }}
-                bgColor={colors.primary['100']}
-                color={colors.dbBlue}
+                bgColor={'surface'}
+                color={'brand'}
                 borderBottom="2px"
                 borderRadius={'0'}
-                borderColor={isSql ? colors.dbBlue : colors.primary['300']}
+                borderColor={isSql ? 'brand' : 'border'}
                 onClick={() => navigate('/sql-jobs')}
                 aria-label={t('common:nav.sqlAria')}
               >
@@ -169,20 +168,20 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
             {showSql && (
               <Button
                 _hover={{
-                  bgColor: colors.primary['100'],
-                  borderColor: colors.dbBlue,
-                  color: colors.primary['400'],
+                  bgColor: 'surface',
+                  borderColor: 'brand',
+                  color: 'textMuted',
                 }}
                 _active={{
-                  borderColor: colors.primary['200'],
-                  color: colors.primary['300'],
+                  borderColor: 'surfaceSubtle',
+                  color: 'textFaint',
                 }}
-                bgColor={colors.primary['100']}
-                color={colors.dbBlue}
+                bgColor={'surface'}
+                color={'brand'}
                 borderBottom="2px"
                 borderRadius={'0'}
                 borderColor={
-                  isConnections ? colors.dbBlue : colors.primary['300']
+                  isConnections ? 'brand' : 'border'
                 }
                 onClick={() => navigate('/sql-connections')}
                 aria-label={t('common:nav.connectionsAria')}
@@ -196,7 +195,7 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
           <MenuButton
             as={Button}
             variant="ghost"
-            color={colors.dbBlue}
+            color={'brand'}
             aria-label={t('common:language.switcher')}
           >
             {i18n.language?.startsWith('ru') ? 'RU' : 'EN'}

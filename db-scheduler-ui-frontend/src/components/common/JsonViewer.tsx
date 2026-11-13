@@ -11,8 +11,8 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { Text } from '@chakra-ui/react';
 import React from 'react';
-import colors from 'src/styles/colors';
 
 type JsonViewerProps = {
   data: object | null;
@@ -29,13 +29,13 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data }) => {
               ))
             : Object.entries(data).map(([key, value]) => (
                 <div key={key}>
-                  <span style={{ color: colors.primary[400] }}>{key}:</span>{' '}
+                  <Text as="span" color="textMuted">{key}:</Text>{' '}
                   {typeof value === 'object' ? (
                     renderJson(value, indent + 1)
                   ) : (
-                    <span style={{ color: colors.primary[900] }}>
+                    <Text as="span" color="textStrong">
                       {JSON.stringify(value)}
-                    </span>
+                    </Text>
                   )}
                 </div>
               ))}

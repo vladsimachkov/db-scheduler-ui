@@ -17,7 +17,6 @@ import { useTranslation } from 'react-i18next';
 import { Box, HStack } from '@chakra-ui/react';
 
 import { SortButton } from 'src/components/input/SortButton';
-import colors from 'src/styles/colors';
 import { SortBy } from 'src/models/QueryParams';
 
 interface TitleRowProps {
@@ -46,7 +45,7 @@ const TitleRow: React.FC<TitleRowProps> = ({
       <Box
         flex="1"
         textAlign="left"
-        textColor={colors.primary['600']}
+        textColor={'textHeading'}
         fontSize={'sm'}
       >
         {t('scheduled:columns.status')}
@@ -64,7 +63,7 @@ const TitleRow: React.FC<TitleRowProps> = ({
       <Box
         flex="2"
         textAlign="left"
-        textColor={colors.primary['600']}
+        textColor={'textHeading'}
         fontSize={'sm'}
       >
         {t('scheduled:columns.taskId')}

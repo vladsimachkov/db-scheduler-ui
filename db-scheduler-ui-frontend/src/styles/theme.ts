@@ -38,6 +38,8 @@ export const theme = extendTheme({
       textHeading: { default: '#3b3b3b', _dark: '#ececec' },
       textStrong: { default: '#1a1a1a', _dark: '#f5f5f5' },
       brand: { default: '#002FA7', _dark: '#8AA6FF' },
+      // checked form-control fill (kept dark in both modes for white check icon)
+      controlChecked: { default: '#4f4f4f', _dark: '#6b6b6b' },
       // status scales
       runningFill: { default: '#DAE2F6', _dark: '#1e2a52' },
       runningFillHover: { default: '#cfd5ff', _dark: '#2a3a6e' },
