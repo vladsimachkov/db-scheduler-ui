@@ -23,7 +23,6 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import runTaskGroup from 'src/services/runTaskGroup';
-import colors from 'src/styles/colors';
 
 interface TaskProps {
   onlyFailed: boolean;
@@ -72,18 +71,18 @@ export const RunAllAlert: React.FC<TaskProps> = ({
               {t('common:cancel')}
             </Button>
             <Button
-              bgColor={onlyFailed ? colors.running[300] : colors.running[100]}
+              bgColor={onlyFailed ? 'runningSolid' : 'runningFill'}
               _hover={{
                 backgroundColor: onlyFailed
-                  ? colors.running[200]
-                  : colors.running[100],
+                  ? 'runningFillHover'
+                  : 'runningFill',
               }}
               _active={{
                 backgroundColor: onlyFailed
-                  ? colors.running[200]
-                  : colors.running[300],
+                  ? 'runningFillHover'
+                  : 'runningSolid',
               }}
-              textColor={onlyFailed ? colors.primary[100] : colors.running[500]}
+              textColor={onlyFailed ? 'textOnSolid' : 'runningText'}
               onClick={() => {
                 runTaskGroup(taskName, onlyFailed).then(() => {
                   refetch();

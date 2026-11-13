@@ -15,7 +15,6 @@ import { Box, Button } from '@chakra-ui/react';
 import { RepeatIcon } from '@chakra-ui/icons';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import colors from 'src/styles/colors';
 import {
   InfiniteData,
   QueryObserverResult,
@@ -85,9 +84,9 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
         iconSpacing={3}
         p={4}
         py={7}
-        borderColor={colors.primary['300']}
+        borderColor={'border'}
         borderWidth={1}
-        bgColor={colors.primary['100']}
+        bgColor={'surface'}
         fontWeight="normal"
         rightIcon={<RepeatIcon boxSize={'7'} />}
       >
@@ -103,7 +102,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
       >
         <RefreshCircle
           number={data?.newFailures ?? 0}
-          color={colors.failed['200']}
+          color={'failed'}
           visible={data?.newFailures !== 0 && data?.newFailures !== undefined}
           hoverText={t('common:refresh.failedSince', {
             count: data?.newFailures ?? 0,
@@ -112,7 +111,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
         {data?.newSucceeded ? (
           <RefreshCircle
             number={data?.newSucceeded ?? 0}
-            color={colors.success['200']}
+            color={'success'}
             visible={
               data?.newSucceeded !== 0 && data?.newSucceeded !== undefined
             }
@@ -123,7 +122,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
         ) : (
           <RefreshCircle
             number={data?.newRunning ?? 0}
-            color={colors.running['300']}
+            color={'running'}
             visible={data?.newRunning !== 0 && data?.newRunning !== undefined}
             hoverText={t('common:refresh.runningSince', {
               count: data?.newRunning ?? 0,
@@ -133,8 +132,8 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
 
         <RefreshCircle
           number={data?.newTasks ?? 0}
-          color={colors.primary['300']}
-          textColor={colors.primary['900']}
+          color={'border'}
+          textColor={'textStrong'}
           visible={data?.newTasks !== 0 && data?.newTasks !== undefined}
           hoverText={t('common:refresh.addedSince', {
             count: data?.newTasks ?? 0,

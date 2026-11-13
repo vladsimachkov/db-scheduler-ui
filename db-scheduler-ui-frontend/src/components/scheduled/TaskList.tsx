@@ -22,7 +22,6 @@ import TitleRow from 'src/components/common/TitleRow';
 import { useInfiniteScrolling } from 'src/hooks/useInfiniteTaskScrolling';
 import { TASK_DETAILS_QUERY_KEY, getTask } from 'src/services/getTask';
 import { TASK_QUERY_KEY, getTasks } from 'src/services/getTasks';
-import colors from 'src/styles/colors';
 import { HeaderBar } from 'src/components/common/HeaderBar';
 import { TasksResponse } from 'src/models/TasksResponse';
 
@@ -109,9 +108,9 @@ const TaskList: React.FC = () => {
       <Flex justifyContent="center" alignItems="center" mt={4}>
         <Button
           onClick={() => fetchNextPage()}
-          bgColor={'white'}
+          bgColor={'surface'}
           isDisabled={!hasNextPage || isFetchingNextPage}
-          borderColor={colors.primary}
+          borderColor={'border'}
           borderWidth={1}
           fontWeight={'medium'}
           mb={24}

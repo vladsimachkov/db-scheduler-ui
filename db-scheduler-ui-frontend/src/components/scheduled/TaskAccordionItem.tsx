@@ -16,7 +16,6 @@ import { TaskDataRow } from 'src/components/scheduled/TaskDataRow';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { dateFormatText } from 'src/utils/dateFormatText';
-import colors from 'src/styles/colors';
 
 interface TaskAccordionItemProps {
   lastSuccess: Date | null;
@@ -36,7 +35,7 @@ export const TaskAccordionItem: React.FC<TaskAccordionItemProps> = ({
         <VStack
           align="start"
           spacing={2}
-          bgColor={colors.primary['100']}
+          bgColor={'surface'}
           p={2}
           w={'100%'}
           borderRadius={4}

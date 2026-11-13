@@ -19,7 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Task } from 'src/models/Task';
 import { isStatus } from 'src/utils/determineStatus';
-import colors from 'src/styles/colors';
 import { ArrowRightIcon } from '@chakra-ui/icons';
 
 interface TaskRunButtonProps extends Task {
@@ -50,31 +49,31 @@ export const TaskRunButton: React.FC<TaskRunButtonProps> = (props) => {
             isStatus('Group', props)
               ? 'transparent'
               : isStatus('Failed', props)
-              ? colors.running['300']
-              : colors.running['100']
+              ? 'runningSolid'
+              : 'runningFill'
           }
           textColor={
             isStatus('Group', props)
-              ? colors.primary['600']
+              ? 'textHeading'
               : isStatus('Failed', props)
-              ? colors.primary['100']
-              : colors.running['500']
+              ? 'textOnSolid'
+              : 'runningText'
           }
           _hover={{
             bgColor: !isStatus('Group', props)
               ? isStatus('Failed', props)
-                ? colors.running['400']
-                : colors.running['200']
+                ? 'runningSolidHover'
+                : 'runningFillHover'
               : 'transparent',
-            textColor: isStatus('Group', props) && colors.primary['400'],
+            textColor: isStatus('Group', props) && 'textMuted',
           }}
           _active={{
             bgColor: isStatus('Group', props)
-              ? colors.primary['100']
+              ? 'surface'
               : isStatus('Failed', props)
-              ? colors.running['300']
-              : colors.running['100'],
-            textColor: isStatus('Group', props) && colors.primary['500'],
+              ? 'runningSolid'
+              : 'runningFill',
+            textColor: isStatus('Group', props) && 'textSecondary',
           }}
           fontWeight="normal"
           rightIcon={

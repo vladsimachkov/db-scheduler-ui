@@ -22,7 +22,6 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import colors from 'src/styles/colors';
 import { DateTimeInput } from './DateTimeInput';
 import runTask from 'src/services/runTask';
 
@@ -78,18 +77,18 @@ export const ScheduleRunAlert: React.FC<TaskProps> = ({
               {t('common:cancel')}
             </Button>
             <Button
-              bgColor={failed ? colors.running[300] : colors.running[100]}
+              bgColor={failed ? 'runningSolid' : 'runningFill'}
               _hover={{
                 backgroundColor: failed
-                  ? colors.running[200]
-                  : colors.running[100],
+                  ? 'runningFillHover'
+                  : 'runningFill',
               }}
               _active={{
                 backgroundColor: failed
-                  ? colors.running[200]
-                  : colors.running[300],
+                  ? 'runningFillHover'
+                  : 'runningSolid',
               }}
-              textColor={failed ? colors.primary[100] : colors.running[500]}
+              textColor={failed ? 'textOnSolid' : 'runningText'}
               onClick={() => {
                 time &&
                   runTask(taskId, taskName, time).then(() => {

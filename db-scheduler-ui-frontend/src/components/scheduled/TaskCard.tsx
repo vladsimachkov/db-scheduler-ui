@@ -19,7 +19,6 @@ import { Task } from 'src/models/Task';
 import { TaskAccordionButton } from 'src/components/scheduled/TaskAccordionButton';
 import { TaskAccordionItem } from 'src/components/scheduled/TaskAccordionItem';
 import { isStatus } from 'src/utils/determineStatus';
-import colors from 'src/styles/colors';
 
 interface TaskCardProps extends Task {
   refetch: () => void;
@@ -31,18 +30,18 @@ const TaskCard: React.FC<TaskCardProps> = (props) => {
 
   return (
     <AccordionItem
-      backgroundColor={colors.primary['100']}
+      backgroundColor={'surface'}
       borderRadius={4}
       m={1}
       borderWidth={1}
-      borderColor={colors.primary['300']}
+      borderColor={'border'}
       {...accordionProps}
       pos={'relative'}
     >
       <TaskAccordionButton {...props} />
       {!isStatus('Group', props) && (
         <>
-          <Divider color={colors.primary['300']} />
+          <Divider color={'border'} />
           <TaskAccordionItem
             lastSuccess={lastSuccess && lastSuccess[0]}
             lastFailure={lastFailure}

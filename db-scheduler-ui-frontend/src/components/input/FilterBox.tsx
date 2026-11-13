@@ -22,7 +22,6 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDownIcon } from '@chakra-ui/icons';
-import colors from 'src/styles/colors';
 import { FilterBy } from 'src/models/QueryParams';
 
 export const FilterBox: React.FC<{
@@ -48,8 +47,8 @@ export const FilterBox: React.FC<{
         <MenuButton
           as={Button}
           rightIcon={<ChevronDownIcon />}
-          backgroundColor={colors.primary['100']}
-          borderColor={colors.primary['300']}
+          backgroundColor={'surface'}
+          borderColor={'border'}
           borderWidth={1}
           width={200}
           textAlign={'left'}
