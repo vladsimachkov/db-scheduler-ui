@@ -52,7 +52,6 @@ import {
   listJobs,
   runJobNow,
 } from 'src/services/sqlJobs';
-import colors from 'src/styles/colors';
 import { cronDescription } from 'src/utils/cronDescription';
 import { dateFormatText } from 'src/utils/dateFormatText';
 import { getReadonly } from 'src/utils/config';
@@ -144,10 +143,10 @@ const SqlJobsPage: React.FC = () => {
       (!job.lastSuccess || job.lastFailure > job.lastSuccess);
     const time = failureNewer ? job.lastFailure : job.lastSuccess;
     if (!time) {
-      return <Text color={colors.primary['400']}>—</Text>;
+      return <Text color="textMuted">—</Text>;
     }
     return (
-      <Text color={failureNewer ? colors.failed['200'] : colors.success['200']}>
+      <Text color={failureNewer ? 'failed' : 'success'}>
         {dateFormatText(new Date(time))}
       </Text>
     );
@@ -192,7 +191,7 @@ const SqlJobsPage: React.FC = () => {
                 <Td>
                   <Text fontWeight={'medium'}>{job.name}</Text>
                   {job.description && (
-                    <Text fontSize={'xs'} color={colors.primary['400']}>
+                    <Text fontSize={'xs'} color="textMuted">
                       {job.description}
                     </Text>
                   )}
@@ -208,7 +207,7 @@ const SqlJobsPage: React.FC = () => {
                       <Text
                         fontSize={'xs'}
                         fontFamily={'monospace'}
-                        color={colors.primary['400']}
+                        color="textMuted"
                       >
                         {job.cronExpression}
                         {job.zoneId ? ` · ${job.zoneId}` : ''}
@@ -273,7 +272,7 @@ const SqlJobsPage: React.FC = () => {
                           icon={<DeleteIcon boxSize={3} />}
                           size={'sm'}
                           variant={'ghost'}
-                          color={colors.failed['200']}
+                          color="failed"
                           onClick={() => setDeleting(job)}
                         />
                       </Tooltip>
@@ -286,7 +285,7 @@ const SqlJobsPage: React.FC = () => {
         </Table>
       </TableContainer>
       {jobs?.length === 0 && (
-        <Text mt={2} color={colors.primary['400']}>
+        <Text mt={2} color="textMuted">
           {t('empty')}
         </Text>
       )}

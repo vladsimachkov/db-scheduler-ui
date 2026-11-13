@@ -56,7 +56,6 @@ import {
   testConnection,
   updateConnection,
 } from 'src/services/sqlConnections';
-import colors from 'src/styles/colors';
 
 const DIALECTS: SqlDialect[] = [
   'ORACLE',
@@ -287,7 +286,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                       isReadOnly
                       fontFamily={'monospace'}
                       fontSize={'sm'}
-                      backgroundColor={colors.primary['200']}
+                      backgroundColor="surfaceSubtle"
                     />
                   </FormControl>
                 </>
@@ -342,14 +341,14 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
               </FormControl>
 
               {formError && (
-                <Text color={colors.failed['200']} fontSize={'sm'}>
+                <Text color="failed" fontSize={'sm'}>
                   {t('error', { message: formError })}
                 </Text>
               )}
               {testResult && (
                 <Text
                   color={
-                    testFailed ? colors.failed['200'] : colors.success['200']
+                    testFailed ? 'failed' : 'success'
                   }
                   fontSize={'sm'}
                 >

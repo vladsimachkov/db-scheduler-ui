@@ -40,7 +40,6 @@ import {
   deleteConnection,
   listConnections,
 } from 'src/services/sqlConnections';
-import colors from 'src/styles/colors';
 import { getReadonly } from 'src/utils/config';
 
 const SqlConnectionsPage: React.FC = () => {
@@ -147,7 +146,7 @@ const SqlConnectionsPage: React.FC = () => {
                     <Button
                       size={'sm'}
                       variant={'ghost'}
-                      color={colors.failed['200']}
+                      color="failed"
                       onClick={() => setDeleting(connection)}
                     >
                       {t('delete')}
@@ -160,12 +159,12 @@ const SqlConnectionsPage: React.FC = () => {
         </Table>
       </TableContainer>
       {isFetching && (
-        <Text mt={2} color={colors.primary['400']}>
+        <Text mt={2} color="textMuted">
           {t('common:loading')}
         </Text>
       )}
       {connections?.length === 0 && (
-        <Text mt={2} color={colors.primary['400']}>
+        <Text mt={2} color="textMuted">
           {t('empty')}
         </Text>
       )}

@@ -24,7 +24,6 @@ import { useTranslation } from 'react-i18next';
 import { previewSchedule } from 'src/services/sqlJobs';
 import { cronDescription } from 'src/utils/cronDescription';
 import { dateFormatText } from 'src/utils/dateFormatText';
-import colors from 'src/styles/colors';
 
 interface CronInputProps {
   value: string;
@@ -81,18 +80,18 @@ const CronInput: React.FC<CronInputProps> = ({
       {trimmed.length > 0 && (
         <Box mt={1}>
           {human && (
-            <Text fontSize={'sm'} color={colors.primary['500']}>
+            <Text fontSize={'sm'} color="textSecondary">
               {human}
             </Text>
           )}
           {/* cronstrue may accept what the backend's CronSchedule rejects — trust the backend */}
           {(human === '' || preview.isError) && (
-            <Text fontSize={'sm'} color={colors.failed['200']}>
+            <Text fontSize={'sm'} color="failed">
               {t('cronInvalid')}
             </Text>
           )}
           {preview.isSuccess && preview.data.length > 0 && (
-            <Box fontSize={'sm'} color={colors.primary['500']} mt={1}>
+            <Box fontSize={'sm'} color="textSecondary" mt={1}>
               <Text fontWeight={'medium'}>{t('nextRuns')}:</Text>
               {preview.data.map((time) => (
                 <Text key={time}>{dateFormatText(new Date(time))}</Text>

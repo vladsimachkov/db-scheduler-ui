@@ -50,7 +50,6 @@ import { DateTimeInput } from 'src/components/input/DateTimeInput';
 import { SqlConnection } from 'src/models/SqlConnection';
 import { SqlJob, SqlJobRequest } from 'src/models/SqlJob';
 import { JOBS_QUERY_KEY, createJob, updateJob } from 'src/services/sqlJobs';
-import colors from 'src/styles/colors';
 
 function defaultValuesFor(initial?: SqlJob): SqlJobFormValues {
   return {
@@ -305,7 +304,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
               </FormControl>
 
               {formError && (
-                <Text color={colors.failed['200']} fontSize={'sm'}>
+                <Text color="failed" fontSize={'sm'}>
                   {t('error', { message: formError })}
                 </Text>
               )}

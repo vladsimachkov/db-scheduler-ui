@@ -29,7 +29,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getJob, listExecutions } from 'src/services/sqlJobs';
-import colors from 'src/styles/colors';
 import { dateFormatText } from 'src/utils/dateFormatText';
 
 function formatDuration(ms: number): string {
@@ -111,7 +110,7 @@ const SqlJobExecutionsPage: React.FC = () => {
                       {execution.errorMessage && (
                         <Text
                           fontSize={'xs'}
-                          color={colors.failed['200']}
+                          color="failed"
                           maxW={'400px'}
                           overflowWrap={'anywhere'}
                         >
@@ -130,7 +129,7 @@ const SqlJobExecutionsPage: React.FC = () => {
         </Table>
       </TableContainer>
       {executions?.length === 0 && (
-        <Text mt={2} color={colors.primary['400']}>
+        <Text mt={2} color="textMuted">
           {t('executions.empty')}
         </Text>
       )}
