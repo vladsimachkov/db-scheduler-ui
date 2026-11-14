@@ -33,9 +33,10 @@ import no.bekk.dbscheduler.ui.sql.model.SqlDialect;
  *
  * <p>Known limitations: Oracle q-quotes ({@code q'[...]'}) containing quotes or semicolons, PL/SQL
  * blocks ({@code BEGIN ... END;}) with internal semicolons, PostgreSQL dollar-quoted strings
- * ({@code $$...$$}) and MSSQL {@code GO} batch separators cannot be split reliably. Prefix such a
- * script with the marker {@code --@no-split} on the first line to send it as one statement (for
- * {@code GO} batches, replace {@code GO} with {@code ;} instead).
+ * ({@code $$...$$}), MSSQL {@code GO} batch separators and MSSQL bracket identifiers containing
+ * semicolons ({@code [my;col]}) cannot be split reliably. Prefix such a script with the marker
+ * {@code --@no-split} on the first line to send it as one statement (for {@code GO} batches,
+ * replace {@code GO} with {@code ;} instead).
  */
 public final class SqlScriptSplitter {
 

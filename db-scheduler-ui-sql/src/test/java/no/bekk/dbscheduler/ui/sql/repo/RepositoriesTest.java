@@ -82,6 +82,8 @@ class RepositoriesTest {
     assertThat(connections.findById("c1").orElseThrow().driverClass()).isNull();
 
     assertThat(connections.findAll()).hasSize(1);
+    connections.deleteById("c1");
+    assertThat(connections.findById("c1")).isEmpty();
   }
 
   @Test
@@ -96,8 +98,6 @@ class RepositoriesTest {
               id, "n", dialect, "jdbc:example://h/db", null, null, null, null, now, now));
       assertThat(connections.findById(id).orElseThrow().dialect()).isEqualTo(dialect);
     }
-    connections.deleteById("c1");
-    assertThat(connections.findById("c1")).isEmpty();
   }
 
   @Test
