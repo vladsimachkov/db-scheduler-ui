@@ -53,6 +53,18 @@ class AuthControllerTest {
   }
 
   @Test
+  void loginFromFreshAnonymousRequestCreatesSession() {
+    when(auth.authenticate("alice", "pw")).thenReturn(Optional.of(ALICE));
+    // a first-ever login has no session to rotate — changeSessionId() would throw
+    MockHttpServletRequest request = new MockHttpServletRequest();
+
+    AuthUserDto dto = controller.login(new LoginRequest("alice", "pw"), request);
+
+    assertThat(dto.authenticated()).isTrue();
+    assertThat(request.getSession().getAttribute(AuthPrincipal.SESSION_KEY)).isEqualTo(ALICE);
+  }
+
+  @Test
   void badCredentialsGive401WithoutMessageLeak() {
     when(auth.authenticate("alice", "nope")).thenReturn(Optional.empty());
     MockHttpServletRequest request = new MockHttpServletRequest();

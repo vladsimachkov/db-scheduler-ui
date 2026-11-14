@@ -52,8 +52,11 @@ public class AuthController {
             // same message for unknown user, disabled account and wrong password
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
-    // rotate the id the request arrived with before binding the identity to it
-    http.changeSessionId();
+    // rotate the id the request arrived with before binding the identity to it; a fully
+    // anonymous request carries no session to rotate, so just create a fresh one
+    if (http.getSession(false) != null) {
+      http.changeSessionId();
+    }
     http.getSession().setAttribute(AuthPrincipal.SESSION_KEY, principal);
     return new AuthUserDto(true, principal.username(), principal.admin());
   }
