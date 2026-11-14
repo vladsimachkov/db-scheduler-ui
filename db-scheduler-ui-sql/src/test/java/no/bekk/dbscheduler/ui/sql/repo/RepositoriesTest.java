@@ -82,6 +82,20 @@ class RepositoriesTest {
     assertThat(connections.findById("c1").orElseThrow().driverClass()).isNull();
 
     assertThat(connections.findAll()).hasSize(1);
+  }
+
+  @Test
+  void addedDialectsRoundTrip() {
+    Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);
+    for (SqlDialect dialect :
+        List.of(
+            SqlDialect.POSTGRESQL, SqlDialect.MARIADB, SqlDialect.MSSQL, SqlDialect.CLICKHOUSE)) {
+      String id = "c-" + dialect.name();
+      connections.insert(
+          new SqlJobConnection(
+              id, "n", dialect, "jdbc:example://h/db", null, null, null, null, now, now));
+      assertThat(connections.findById(id).orElseThrow().dialect()).isEqualTo(dialect);
+    }
     connections.deleteById("c1");
     assertThat(connections.findById("c1")).isEmpty();
   }

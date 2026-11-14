@@ -114,6 +114,39 @@ class SqlScriptSplitterTest {
   }
 
   @Test
+  void mariadbBehavesLikeMysql() {
+    assertThat(
+            SqlScriptSplitter.split(
+                "SELECT 1 # comment; here\n; INSERT INTO t VALUES ('a\\'b')", SqlDialect.MARIADB))
+        .containsExactly("SELECT 1 # comment; here", "INSERT INTO t VALUES ('a\\'b')");
+  }
+
+  @Test
+  void clickhouseHonorsBackslashEscapes() {
+    assertThat(
+            SqlScriptSplitter.split(
+                "INSERT INTO t VALUES ('a\\'b'); SELECT 2", SqlDialect.CLICKHOUSE))
+        .containsExactly("INSERT INTO t VALUES ('a\\'b')", "SELECT 2");
+  }
+
+  @Test
+  void postgresBackslashIsLiteral() {
+    // standard_conforming_strings: the backslash does not escape the quote, so the literal ends
+    // there and the following ';' splits
+    assertThat(
+            SqlScriptSplitter.split(
+                "INSERT INTO t VALUES ('a\\'); SELECT 2", SqlDialect.POSTGRESQL))
+        .containsExactly("INSERT INTO t VALUES ('a\\')", "SELECT 2");
+  }
+
+  @Test
+  void mssqlHashIsNotAComment() {
+    // '#t' is a temp-table name in T-SQL, not a comment marker
+    assertThat(SqlScriptSplitter.split("create table #t(x int); select 1", SqlDialect.MSSQL))
+        .containsExactly("create table #t(x int)", "select 1");
+  }
+
+  @Test
   void dropsBlockCommentOnlySegment() {
     assertThat(split("/* just a note */; SELECT 1")).containsExactly("SELECT 1");
   }

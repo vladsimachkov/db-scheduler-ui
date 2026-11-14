@@ -19,5 +19,9 @@ public enum SqlDialect {
   TRINO,
   IMPALA,
   MYSQL,
+  MARIADB,
+  POSTGRESQL,
+  MSSQL,
+  CLICKHOUSE,
   GENERIC
 }

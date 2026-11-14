@@ -22,14 +22,20 @@ import no.bekk.dbscheduler.ui.sql.model.SqlDialect;
  * literals, quoted identifiers and line/block comments. Dialect quirks:
  *
  * <ul>
- *   <li>{@code MYSQL}: {@code #} starts a line comment and backslash escapes inside strings ({@code
- *       \'}) are honored.
- *   <li>{@code IMPALA} (Hive SQL): backslash escapes inside strings are honored.
+ *   <li>{@code MYSQL} and {@code MARIADB}: {@code #} starts a line comment and backslash escapes
+ *       inside strings ({@code \'}) are honored.
+ *   <li>{@code IMPALA} (Hive SQL) and {@code CLICKHOUSE}: backslash escapes inside strings are
+ *       honored.
+ *   <li>{@code POSTGRESQL} and {@code MSSQL}: backslashes inside strings are literal (standard
+ *       {@code standard_conforming_strings}), and {@code #} is ordinary text — in T-SQL {@code
+ *       #temp} is a table name, not a comment.
  * </ul>
  *
- * <p>Known limitations: Oracle q-quotes ({@code q'[...]'}) containing quotes or semicolons, and
- * PL/SQL blocks ({@code BEGIN ... END;}) with internal semicolons cannot be split reliably. Prefix
- * such a script with the marker {@code --@no-split} on the first line to send it as one statement.
+ * <p>Known limitations: Oracle q-quotes ({@code q'[...]'}) containing quotes or semicolons, PL/SQL
+ * blocks ({@code BEGIN ... END;}) with internal semicolons, PostgreSQL dollar-quoted strings
+ * ({@code $$...$$}) and MSSQL {@code GO} batch separators cannot be split reliably. Prefix such a
+ * script with the marker {@code --@no-split} on the first line to send it as one statement (for
+ * {@code GO} batches, replace {@code GO} with {@code ;} instead).
  */
 public final class SqlScriptSplitter {
 
@@ -57,7 +63,7 @@ public final class SqlScriptSplitter {
 
       if (c == '-' && next == '-') {
         i = copyLineComment(script, i, current);
-      } else if (c == '#' && dialect == SqlDialect.MYSQL) {
+      } else if (c == '#' && hashIsLineComment(dialect)) {
         i = copyLineComment(script, i, current);
       } else if (c == '/' && next == '*') {
         int end = script.indexOf("*/", i + 2);
@@ -93,15 +99,28 @@ public final class SqlScriptSplitter {
     return end + 1;
   }
 
+  /** {@code #} starts a line comment only in MySQL/MariaDB; elsewhere it is ordinary text. */
+  private static boolean hashIsLineComment(SqlDialect dialect) {
+    return dialect == SqlDialect.MYSQL || dialect == SqlDialect.MARIADB;
+  }
+
+  /** Whether string literals honor backslash escapes ({@code \'}) in this dialect. */
+  private static boolean backslashEscapes(SqlDialect dialect) {
+    return dialect == SqlDialect.MYSQL
+        || dialect == SqlDialect.MARIADB
+        || dialect == SqlDialect.IMPALA
+        || dialect == SqlDialect.CLICKHOUSE;
+  }
+
   private static int copyQuoted(String script, int from, SqlDialect dialect, StringBuilder out) {
-    boolean backslashEscapes = dialect == SqlDialect.MYSQL || dialect == SqlDialect.IMPALA;
+    boolean escapesBackslash = backslashEscapes(dialect);
     char quote = script.charAt(from);
     out.append(quote);
     int i = from + 1;
     int len = script.length();
     while (i < len) {
       char sc = script.charAt(i);
-      if (backslashEscapes && sc == '\\' && i + 1 < len) {
+      if (escapesBackslash && sc == '\\' && i + 1 < len) {
         out.append(sc).append(script.charAt(i + 1));
         i += 2;
         continue;
@@ -141,7 +160,7 @@ public final class SqlScriptSplitter {
       } else if (c == '-' && next == '-') {
         int end = segment.indexOf('\n', i);
         i = end == -1 ? len : end + 1;
-      } else if (c == '#' && dialect == SqlDialect.MYSQL) {
+      } else if (c == '#' && hashIsLineComment(dialect)) {
         int end = segment.indexOf('\n', i);
         i = end == -1 ? len : end + 1;
       } else if (c == '/' && next == '*') {
