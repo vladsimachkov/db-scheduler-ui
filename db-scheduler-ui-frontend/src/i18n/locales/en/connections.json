@@ -45,5 +45,9 @@
     "password": "Password"
   },
   "passwordYes": "set",
-  "passwordNo": "none"
+  "passwordNo": "none",
+  "schema": "Schema",
+  "schemaRequired": "A schema is required",
+  "selectSchema": "Select a schema",
+  "schemasError": "Could not load schemas"
 }

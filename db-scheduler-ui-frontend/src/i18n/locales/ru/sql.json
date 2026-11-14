@@ -69,5 +69,11 @@
   "trigger": {
     "SCHEDULE": "По расписанию",
     "MANUAL": "Вручную"
-  }
+  },
+  "schema": "Схема",
+  "allSchemas": "Все схемы",
+  "schemaRequired": "Требуется выбрать схему",
+  "selectSchema": "Выберите схему",
+  "schemasError": "Не удалось загрузить схемы",
+  "noMatchingJobs": "В выбранной схеме нет заданий"
 }

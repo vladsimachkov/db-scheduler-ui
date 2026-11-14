@@ -76,10 +76,13 @@ import { DateTimeInput } from 'src/components/input/DateTimeInput';
 import { SqlConnection } from 'src/models/SqlConnection';
 import { SqlJob, SqlJobRequest } from 'src/models/SqlJob';
 import { JOBS_QUERY_KEY, createJob, updateJob } from 'src/services/sqlJobs';
+import { Schema } from 'src/models/Schema';
+import { getUsersEnabled } from 'src/utils/config';
 
 function defaultValuesFor(initial?: SqlJob): SqlJobFormValues {
   return {
     name: initial?.name ?? '',
+    schemaId: initial?.schemaId ?? '',
     description: initial?.description ?? '',
     connectionId: initial?.connectionId ?? '',
     scheduleType: initial && !initial.recurring ? 'once' : 'cron',
@@ -203,6 +206,7 @@ interface SqlJobFormProps {
   isOpen: boolean;
   onClose: () => void;
   connections: SqlConnection[];
+  schemas: Schema[];
   initial?: SqlJob;
 }
 
@@ -210,6 +214,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
   isOpen,
   onClose,
   connections,
+  schemas,
   initial,
 }) => {
   const { t } = useTranslation('sql');
@@ -225,9 +230,10 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
     control,
     watch,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<SqlJobFormValues>({
-    resolver: zodResolver(sqlJobFormSchema),
+    resolver: zodResolver(sqlJobFormSchema(getUsersEnabled())),
     defaultValues: defaultValuesFor(initial),
   });
   const { fields, append, remove, move } = useFieldArray({
@@ -279,11 +285,32 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
     onError: (error: Error) => setFormError(error.message),
   });
 
+  const usersEnabled = getUsersEnabled();
+  const selectedSchema = watch('schemaId');
+  // a job's connection must belong to the job's schema, so offer only matching ones
+  const visibleConnections =
+    usersEnabled && selectedSchema
+      ? connections.filter((c) => c.schemaId === selectedSchema)
+      : connections;
+
+  const onSchemaChange = (schemaId: string) => {
+    setValue('schemaId', schemaId);
+    const stillValid = connections.some(
+      (c) =>
+        c.id === watch('connectionId') &&
+        (!usersEnabled || !schemaId || c.schemaId === schemaId),
+    );
+    if (!stillValid) {
+      setValue('connectionId', '');
+    }
+  };
+
   const onSubmit = handleSubmit((values) => {
     setFormError(null);
     save.mutate({
       name: values.name.trim(),
       description: values.description.trim() || undefined,
+      schemaId: values.schemaId || undefined,
       connectionId: values.connectionId,
       scripts: values.scripts.map((entry) => entry.script.trim()),
       timeoutSeconds: Number(values.timeoutSeconds),
@@ -333,6 +360,34 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                 <Input {...register('description')} />
               </FormControl>
 
+              {usersEnabled && (
+                <FormControl isInvalid={!!errors.schemaId}>
+                  <FormLabel>{t('schema')}</FormLabel>
+                  <Controller
+                    control={control}
+                    name="schemaId"
+                    render={({ field }) => (
+                      <Select
+                        placeholder={t('selectSchema')}
+                        value={field.value}
+                        onChange={(event) => onSchemaChange(event.target.value)}
+                      >
+                        {schemas.map((schema) => (
+                          <option key={schema.id} value={schema.id}>
+                            {schema.name}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  />
+                  {errors.schemaId && (
+                    <FormErrorMessage>
+                      {formErrorText(t, errors.schemaId.message, 'schemaRequired')}
+                    </FormErrorMessage>
+                  )}
+                </FormControl>
+              )}
+
               <FormControl isInvalid={!!errors.connectionId}>
                 <FormLabel>{t('connection')}</FormLabel>
                 <Controller
@@ -344,7 +399,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                       value={field.value}
                       onChange={field.onChange}
                     >
-                      {connections.map((connection) => (
+                      {visibleConnections.map((connection) => (
                         <option key={connection.id} value={connection.id}>
                           {connection.name}
                         </option>

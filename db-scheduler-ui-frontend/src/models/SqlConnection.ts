@@ -26,6 +26,7 @@ export type SqlDialect =
 export interface SqlConnection {
   id: string;
   name: string;
+  schemaId: string | null;
   dialect: SqlDialect;
   jdbcUrl: string;
   driverClass: string | null;
@@ -38,6 +39,7 @@ export interface SqlConnection {
 
 export interface SqlConnectionRequest {
   name: string;
+  schemaId?: string;
   dialect: SqlDialect;
   jdbcUrl: string;
   driverClass?: string;

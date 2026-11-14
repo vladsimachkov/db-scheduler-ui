@@ -33,7 +33,7 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
@@ -53,6 +53,8 @@ import {
   testConnection,
   updateConnection,
 } from 'src/services/sqlConnections';
+import { SCHEMAS_QUERY_KEY, listSchemas } from 'src/services/schemas';
+import { getUsersEnabled } from 'src/utils/config';
 
 const DIALECTS: SqlDialect[] = [
   'ORACLE',
@@ -83,6 +85,7 @@ const DIALECT_DRIVER_HINT: Record<SqlDialect, string> = {
 function defaultValuesFor(initial?: SqlConnection): ConnectionFormValues {
   return {
     name: initial?.name ?? '',
+    schemaId: initial?.schemaId ?? '',
     dialect: initial?.dialect ?? 'ORACLE',
     jdbcUrl: initial?.jdbcUrl ?? '',
     driverClass: initial?.driverClass ?? '',
@@ -105,6 +108,13 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   initial,
 }) => {
   const { t } = useTranslation('connections');
+  const usersEnabled = getUsersEnabled();
+  const { data: schemas, isError: schemasError } = useQuery({
+    queryKey: [SCHEMAS_QUERY_KEY],
+    queryFn: listSchemas,
+    enabled: usersEnabled,
+    staleTime: 60_000,
+  });
   const toast = useToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
@@ -119,7 +129,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     reset,
     formState: { errors },
   } = useForm<ConnectionFormValues>({
-    resolver: zodResolver(connectionFormSchema),
+    resolver: zodResolver(connectionFormSchema(usersEnabled)),
     defaultValues: defaultValuesFor(initial),
   });
 
@@ -179,6 +189,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     setFormError(null);
     save.mutate({
       name: formValues.name.trim(),
+      schemaId: formValues.schemaId || undefined,
       dialect: formValues.dialect,
       jdbcUrl: formValues.jdbcUrl.trim(),
       driverClass: formValues.driverClass.trim() || undefined,
@@ -208,6 +219,39 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                   </FormErrorMessage>
                 )}
               </FormControl>
+
+              {usersEnabled && (
+                <FormControl isInvalid={!!errors.schemaId}>
+                  <FormLabel>{t('schema')}</FormLabel>
+                  <Controller
+                    control={control}
+                    name="schemaId"
+                    render={({ field }) => (
+                      <Select
+                        placeholder={t('selectSchema')}
+                        value={field.value}
+                        onChange={field.onChange}
+                      >
+                        {(schemas ?? []).map((schema) => (
+                          <option key={schema.id} value={schema.id}>
+                            {schema.name}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  />
+                  {schemasError && (
+                    <Text fontSize="sm" color="failed">
+                      {t('schemasError')}
+                    </Text>
+                  )}
+                  {errors.schemaId && (
+                    <FormErrorMessage>
+                      {formErrorText(t, errors.schemaId.message, 'schemaRequired')}
+                    </FormErrorMessage>
+                  )}
+                </FormControl>
+              )}
 
               <HStack spacing={4} align={'start'}>
                 <FormControl flex={1}>

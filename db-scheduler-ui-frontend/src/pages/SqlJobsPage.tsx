@@ -24,6 +24,7 @@ import {
   Button,
   HStack,
   IconButton,
+  Select,
   Table,
   TableContainer,
   Tbody,
@@ -52,9 +53,10 @@ import {
   listJobs,
   runJobNow,
 } from 'src/services/sqlJobs';
+import { SCHEMAS_QUERY_KEY, listSchemas } from 'src/services/schemas';
 import { cronDescription } from 'src/utils/cronDescription';
 import { dateFormatText } from 'src/utils/dateFormatText';
-import { getReadonly } from 'src/utils/config';
+import { getReadonly, getUsersEnabled } from 'src/utils/config';
 
 const SqlJobsPage: React.FC = () => {
   const { t } = useTranslation('sql');
@@ -64,7 +66,9 @@ const SqlJobsPage: React.FC = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<SqlJob | undefined>(undefined);
   const [deleting, setDeleting] = useState<SqlJob | undefined>(undefined);
+  const [schemaFilter, setSchemaFilter] = useState('');
   const cancelRef = useRef(null);
+  const usersEnabled = getUsersEnabled();
 
   const { data: jobs } = useQuery({
     queryKey: [JOBS_QUERY_KEY],
@@ -75,6 +79,15 @@ const SqlJobsPage: React.FC = () => {
     queryKey: [CONNECTIONS_QUERY_KEY],
     queryFn: listConnections,
   });
+  const { data: schemas, isError: schemasError } = useQuery({
+    queryKey: [SCHEMAS_QUERY_KEY],
+    queryFn: listSchemas,
+    enabled: usersEnabled,
+    staleTime: 60_000,
+  });
+  const visibleJobs = schemaFilter
+    ? (jobs ?? []).filter((job) => job.schemaId === schemaFilter)
+    : jobs;
 
   const invalidateJobs = () =>
     queryClient.invalidateQueries({ queryKey: [JOBS_QUERY_KEY] });
@@ -158,9 +171,31 @@ const SqlJobsPage: React.FC = () => {
         <Text fontSize={'2xl'} fontWeight={'semibold'}>
           {t('title')}
         </Text>
+        {usersEnabled && (
+          <Select
+            ml={'auto'}
+            w={'auto'}
+            maxW={'240px'}
+            aria-label={t('schema')}
+            value={schemaFilter}
+            onChange={(event) => setSchemaFilter(event.target.value)}
+          >
+            <option value="">{t('allSchemas')}</option>
+            {(schemas ?? []).map((schema) => (
+              <option key={schema.id} value={schema.id}>
+                {schema.name}
+              </option>
+            ))}
+          </Select>
+        )}
+        {schemasError && (
+          <Text color="failed" fontSize="sm">
+            {t('schemasError')}
+          </Text>
+        )}
         {!readOnly && (
           <Button
-            ml={'auto'}
+            ml={usersEnabled ? 0 : 'auto'}
             colorScheme={'blue'}
             onClick={() => {
               setEditing(undefined);
@@ -186,7 +221,7 @@ const SqlJobsPage: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {jobs?.map((job) => (
+            {visibleJobs?.map((job) => (
               <Tr key={job.jobId}>
                 <Td>
                   <Text fontWeight={'medium'}>{job.name}</Text>
@@ -283,9 +318,9 @@ const SqlJobsPage: React.FC = () => {
           </Tbody>
         </Table>
       </TableContainer>
-      {jobs?.length === 0 && (
+      {jobs && visibleJobs?.length === 0 && (
         <Text mt={2} color="textMuted">
-          {t('empty')}
+          {schemaFilter ? t('noMatchingJobs') : t('empty')}
         </Text>
       )}
 
@@ -293,6 +328,7 @@ const SqlJobsPage: React.FC = () => {
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
         connections={connections ?? []}
+        schemas={schemas ?? []}
         initial={editing}
       />
 

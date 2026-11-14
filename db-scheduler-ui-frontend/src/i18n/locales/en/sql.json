@@ -69,5 +69,11 @@
   "trigger": {
     "SCHEDULE": "Scheduled",
     "MANUAL": "Manual"
-  }
+  },
+  "schema": "Schema",
+  "allSchemas": "All schemas",
+  "schemaRequired": "A schema is required",
+  "selectSchema": "Select a schema",
+  "schemasError": "Could not load schemas",
+  "noMatchingJobs": "No jobs in the selected schema"
 }

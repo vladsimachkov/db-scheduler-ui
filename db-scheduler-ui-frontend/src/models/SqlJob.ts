@@ -17,6 +17,8 @@ export interface SqlJob {
   jobId: string;
   name: string;
   description: string | null;
+  schemaId: string | null;
+  schemaName: string | null;
   connectionId: string;
   connectionName: string | null;
   scripts: string[];
@@ -33,6 +35,7 @@ export interface SqlJob {
 export interface SqlJobRequest {
   name: string;
   description?: string;
+  schemaId?: string;
   connectionId: string;
   scripts: string[];
   timeoutSeconds?: number;

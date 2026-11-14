@@ -16,7 +16,7 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import ConnectionForm from 'src/components/sql/ConnectionForm';
 import i18n from 'src/i18n';
 import { SqlConnection } from 'src/models/SqlConnection';
@@ -25,6 +25,15 @@ import {
   testConnection,
   updateConnection,
 } from 'src/services/sqlConnections';
+import { listSchemas } from 'src/services/schemas';
+
+// mutable so one describe can flip the users feature on
+let usersEnabledFlag = false;
+vi.mock('src/utils/config', () => ({ getUsersEnabled: () => usersEnabledFlag }));
+vi.mock('src/services/schemas', () => ({
+  SCHEMAS_QUERY_KEY: 'sql-schemas',
+  listSchemas: vi.fn(),
+}));
 
 vi.mock('src/services/sqlConnections', () => ({
   CONNECTIONS_QUERY_KEY: 'sql-connections',
@@ -63,6 +72,7 @@ beforeEach(() => {
 const editedConnection: SqlConnection = {
   id: 'c1',
   name: 'demo',
+  schemaId: null,
   dialect: 'POSTGRESQL',
   jdbcUrl: 'jdbc:postgresql://db.example.com:5432/app',
   driverClass: null,
@@ -153,6 +163,8 @@ describe('ConnectionForm', () => {
   it('creates a connection with trimmed values and closes the dialog', async () => {
     vi.mocked(createConnection).mockResolvedValue(editedConnection);
     const { onClose } = renderForm();
+    // the users feature is off here: no schema picker at all
+    expect(screen.queryByLabelText('Schema')).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Name'), {
       target: { value: '  demo  ' },
@@ -220,5 +232,55 @@ describe('ConnectionForm', () => {
 
     expect(await screen.findByText('Error: No suitable driver')).toBeInTheDocument();
     expect(testConnection).toHaveBeenCalledWith('c1');
+  });
+});
+
+describe('ConnectionForm with the users feature on', () => {
+  beforeEach(() => {
+    usersEnabledFlag = true;
+    vi.mocked(listSchemas).mockResolvedValue([
+      {
+        id: 's1',
+        name: 'Main',
+        description: null,
+        createdTime: '2026-01-01T00:00:00Z',
+        updatedTime: '2026-01-01T00:00:00Z',
+      },
+    ]);
+  });
+  afterEach(() => {
+    usersEnabledFlag = false;
+  });
+
+  it('requires a schema before the connection can be saved', async () => {
+    renderForm();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'demo' } });
+    fireEvent.change(screen.getByLabelText('JDBC URL'), {
+      target: { value: 'jdbc:h2:mem:demo' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText('A schema is required')).toBeInTheDocument();
+    expect(createConnection).not.toHaveBeenCalled();
+  });
+
+  it('sends the chosen schema on create', async () => {
+    vi.mocked(createConnection).mockResolvedValue(editedConnection);
+    renderForm();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'demo' } });
+    fireEvent.change(screen.getByLabelText('JDBC URL'), {
+      target: { value: 'jdbc:h2:mem:demo' },
+    });
+    // the schema options arrive with the /sql-schemas query
+    await screen.findByText('Main');
+    fireEvent.change(screen.getByLabelText('Schema'), {
+      target: { value: 's1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(createConnection).toHaveBeenCalled());
+    expect(
+      vi.mocked(createConnection).mock.calls[0][0].schemaId,
+    ).toBe('s1');
   });
 });

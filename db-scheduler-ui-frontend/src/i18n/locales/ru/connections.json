@@ -45,5 +45,9 @@
     "password": "Пароль"
   },
   "passwordYes": "задан",
-  "passwordNo": "нет"
+  "passwordNo": "нет",
+  "schema": "Схема",
+  "schemaRequired": "Требуется выбрать схему",
+  "selectSchema": "Выберите схему",
+  "schemasError": "Не удалось загрузить схемы"
 }

@@ -13,9 +13,11 @@
  */
 import { z } from 'zod';
 
-export const connectionFormSchema = z
+export const connectionFormSchema = (requireSchema = false) =>
+  z
   .object({
     name: z.string().trim().min(1, 'required').max(100, 'tooLong'),
+    schemaId: z.string(),
     dialect: z.enum([
       'ORACLE',
       'TRINO',
@@ -35,6 +37,13 @@ export const connectionFormSchema = z
     propertiesJson: z.string().max(4000, 'tooLong'),
   })
   .superRefine((values, ctx) => {
+    if (requireSchema && !values.schemaId) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['schemaId'],
+        message: 'schemaRequired',
+      });
+    }
     if (!values.jdbcUrl.trim()) {
       ctx.addIssue({
         code: 'custom',
@@ -66,11 +75,15 @@ export const connectionFormSchema = z
     }
   });
 
-export type ConnectionFormValues = z.infer<typeof connectionFormSchema>;
+export type ConnectionFormValues = z.infer<
+  ReturnType<typeof connectionFormSchema>
+>;
 
-export const sqlJobFormSchema = z
+export const sqlJobFormSchema = (requireSchema = false) =>
+  z
   .object({
     name: z.string().trim().min(1, 'required').max(100, 'tooLong'),
+    schemaId: z.string(),
     description: z.string().max(1000, 'tooLong'),
     connectionId: z.string().min(1, 'connectionRequired'),
     scheduleType: z.enum(['cron', 'once']),
@@ -83,6 +96,13 @@ export const sqlJobFormSchema = z
     timeoutSeconds: z.string().trim(),
   })
   .superRefine((values, ctx) => {
+    if (requireSchema && !values.schemaId) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['schemaId'],
+        message: 'schemaRequired',
+      });
+    }
     if (values.scheduleType === 'cron' && !values.cronExpression.trim()) {
       ctx.addIssue({
         code: 'custom',
@@ -111,7 +131,7 @@ export const sqlJobFormSchema = z
     }
   });
 
-export type SqlJobFormValues = z.infer<typeof sqlJobFormSchema>;
+export type SqlJobFormValues = z.infer<ReturnType<typeof sqlJobFormSchema>>;
 
 /**
  * Schema validation messages are i18n keys, but zod can still emit its own built-in
@@ -126,6 +146,7 @@ const I18N_KEYS = new Set([
   'connectionRequired',
   'scriptRequired',
   'invalidJson',
+  'schemaRequired',
 ]);
 
 export function formErrorText(
