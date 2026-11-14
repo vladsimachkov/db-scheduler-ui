@@ -42,7 +42,6 @@ const baseJob = {
   connectionId: 'c1',
   scheduleType: 'cron' as const,
   cronExpression: '0 0 3 * * ?',
-  zoneId: '',
   runAt: null,
   script: 'SELECT 1;',
   timeoutSeconds: '300',

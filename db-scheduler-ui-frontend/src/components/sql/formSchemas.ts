@@ -65,7 +65,6 @@ export const sqlJobFormSchema = z
     connectionId: z.string().min(1, 'connectionRequired'),
     scheduleType: z.enum(['cron', 'once']),
     cronExpression: z.string().max(100, 'tooLong'),
-    zoneId: z.string().max(64, 'tooLong'),
     runAt: z.instanceof(Date).nullable(),
     script: z.string().trim().min(1, 'scriptRequired'),
     timeoutSeconds: z.string().trim(),

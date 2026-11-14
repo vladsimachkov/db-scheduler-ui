@@ -43,12 +43,8 @@ export const listExecutions = (
 
 export const previewSchedule = (
   cron: string,
-  timezone?: string,
   count = 3,
 ): Promise<string[]> => {
   const params = new URLSearchParams({ cron, count: String(count) });
-  if (timezone) {
-    params.append('timezone', timezone);
-  }
   return apiGet<string[]>(`/sql-jobs/preview-schedule?${params}`);
 };

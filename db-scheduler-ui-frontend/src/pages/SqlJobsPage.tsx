@@ -210,7 +210,6 @@ const SqlJobsPage: React.FC = () => {
                         color="textMuted"
                       >
                         {job.cronExpression}
-                        {job.zoneId ? ` · ${job.zoneId}` : ''}
                       </Text>
                     </>
                   ) : (

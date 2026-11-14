@@ -16,7 +16,6 @@ import {
   Button,
   FormControl,
   FormErrorMessage,
-  FormHelperText,
   FormLabel,
   HStack,
   Input,
@@ -58,7 +57,6 @@ function defaultValuesFor(initial?: SqlJob): SqlJobFormValues {
     connectionId: initial?.connectionId ?? '',
     scheduleType: initial && !initial.recurring ? 'once' : 'cron',
     cronExpression: initial?.cronExpression ?? '',
-    zoneId: initial?.zoneId ?? '',
     // A pending one-time job's next run is its scheduled time — prefill so editing
     // the script or name does not force re-picking a time.
     runAt:
@@ -141,10 +139,6 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
       cronExpression:
         values.scheduleType === 'cron'
           ? values.cronExpression.trim()
-          : undefined,
-      zoneId:
-        values.scheduleType === 'cron' && values.zoneId.trim()
-          ? values.zoneId.trim()
           : undefined,
       runAt:
         values.scheduleType === 'once' && values.runAt
@@ -241,7 +235,6 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                         <CronInput
                           value={field.value}
                           onChange={field.onChange}
-                          timezone={watch('zoneId') || undefined}
                           isInvalid={!!errors.cronExpression}
                           errorMessage={formErrorText(
                             t,
@@ -251,14 +244,6 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                         />
                       )}
                     />
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel>{t('zone')}</FormLabel>
-                    <Input
-                      {...register('zoneId')}
-                      placeholder={'Europe/Moscow'}
-                    />
-                    <FormHelperText>{t('zoneHint')}</FormHelperText>
                   </FormControl>
                 </>
               ) : (

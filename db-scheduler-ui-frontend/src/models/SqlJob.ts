@@ -22,7 +22,6 @@ export interface SqlJob {
   script: string;
   timeoutSeconds: number;
   cronExpression: string | null;
-  zoneId: string | null;
   recurring: boolean;
   nextRunTime: string | null;
   lastSuccess: string | null;
@@ -38,7 +37,6 @@ export interface SqlJobRequest {
   script: string;
   timeoutSeconds?: number;
   cronExpression?: string;
-  zoneId?: string;
   runAt?: string;
 }
 

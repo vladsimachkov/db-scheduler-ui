@@ -28,7 +28,6 @@ import { dateFormatText } from 'src/utils/dateFormatText';
 interface CronInputProps {
   value: string;
   onChange: (value: string) => void;
-  timezone?: string;
   isInvalid?: boolean;
   errorMessage?: string;
 }
@@ -40,7 +39,6 @@ interface CronInputProps {
 const CronInput: React.FC<CronInputProps> = ({
   value,
   onChange,
-  timezone,
   isInvalid,
   errorMessage,
 }) => {
@@ -57,8 +55,8 @@ const CronInput: React.FC<CronInputProps> = ({
   const human = useMemo(() => cronDescription(trimmed), [trimmed]);
 
   const preview = useQuery({
-    queryKey: ['cron-preview', trimmed, timezone ?? ''],
-    queryFn: () => previewSchedule(trimmed, timezone || undefined, 3),
+    queryKey: ['cron-preview', trimmed],
+    queryFn: () => previewSchedule(trimmed, 3),
     enabled: trimmed.length > 0,
     staleTime: 60_000,
   });

@@ -18,8 +18,6 @@
   "cronHint": "6 fields: second minute hour day month day-of-week",
   "cronInvalid": "Invalid cron expression",
   "nextRuns": "Next runs",
-  "zone": "Time zone",
-  "zoneHint": "Defaults to the server time zone",
   "script": "SQL script",
   "scriptRequired": "Enter a SQL script",
   "timeout": "Per-statement timeout, seconds",
