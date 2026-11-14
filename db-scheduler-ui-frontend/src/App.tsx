@@ -14,6 +14,7 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { AuthProvider } from 'src/hooks/AuthProvider';
 import { theme } from 'src/styles/theme';
 import { FrontPage } from './pages/FrontPage';
 
@@ -25,7 +26,9 @@ function App() {
   return (
     <ChakraProvider theme={theme}>
       <QueryClientProvider client={queryClient}>
-        <FrontPage />
+        <AuthProvider>
+          <FrontPage />
+        </AuthProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ChakraProvider>

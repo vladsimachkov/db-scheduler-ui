@@ -12,6 +12,8 @@
  * limitations under the License.
  */
 
+import { getUsersEnabled } from 'src/utils/config';
+
 export const API_BASE_URL: string =
   (import.meta.env.VITE_API_BASE_URL as string) ??
   window.location.origin + (window.CONTEXT_PATH || '') + '/db-scheduler-api';
@@ -51,14 +53,35 @@ export async function problemDetailMessage(
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+/**
+ * Dispatched on any API 401 while the built-in users feature is on; useAuth listens and drops the
+ * UI back to the login screen. A full-page redirect would throw away SPA state for no reason.
+ */
+export const UNAUTHORIZED_EVENT = 'db-scheduler-ui:unauthorized';
+
+async function request<T>(
+  path: string,
+  init?: RequestInit,
+  opts?: { skipAuthHandling?: boolean },
+): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    // merged, not replaced: a caller-provided header must not drop the CSRF guard
+    headers: {
+      'Content-Type': 'application/json',
+      // CSRF guard of the built-in login: cross-site form posts cannot set custom headers
+      'X-Requested-With': 'XMLHttpRequest',
+      ...(init?.headers as Record<string, string> | undefined),
+    },
   });
 
-  if (response.status === 401) {
-    redirectToUi();
+  if (response.status === 401 && !opts?.skipAuthHandling) {
+    if (getUsersEnabled()) {
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+    } else {
+      // host-managed security: the entry page is expected to bounce to the login provider
+      redirectToUi();
+    }
     throw new ApiError(401, 'Unauthorized');
   }
   if (!response.ok) {
@@ -78,6 +101,17 @@ export const apiPost = <T>(path: string, body?: unknown): Promise<T> =>
     method: 'POST',
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+
+/**
+ * POST without the global 401 handling — for the login endpoint itself, where 401 means
+ * "wrong credentials" and must surface as a form error, not a session-expired event.
+ */
+export const apiPostLogin = <T>(path: string, body?: unknown): Promise<T> =>
+  request<T>(
+    path,
+    { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) },
+    { skipAuthHandling: true },
+  );
 
 export const apiPut = <T>(path: string, body?: unknown): Promise<T> =>
   request<T>(path, { method: 'PUT', body: JSON.stringify(body) });

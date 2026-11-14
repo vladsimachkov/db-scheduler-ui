@@ -23,12 +23,14 @@ import ruScheduled from './locales/ru/scheduled.json';
 import ruHistory from './locales/ru/history.json';
 import ruSql from './locales/ru/sql.json';
 import ruConnections from './locales/ru/connections.json';
+import ruAuth from './locales/ru/auth.json';
 import enCommon from './locales/en/common.json';
 import enOverview from './locales/en/overview.json';
 import enScheduled from './locales/en/scheduled.json';
 import enHistory from './locales/en/history.json';
 import enSql from './locales/en/sql.json';
 import enConnections from './locales/en/connections.json';
+import enAuth from './locales/en/auth.json';
 
 export const NAMESPACES = [
   'common',
@@ -37,6 +39,7 @@ export const NAMESPACES = [
   'history',
   'sql',
   'connections',
+  'auth',
 ];
 
 i18n
@@ -51,6 +54,7 @@ i18n
         history: ruHistory,
         sql: ruSql,
         connections: ruConnections,
+        auth: ruAuth,
       },
       en: {
         common: enCommon,
@@ -59,6 +63,7 @@ i18n
         history: enHistory,
         sql: enSql,
         connections: enConnections,
+        auth: enAuth,
       },
     },
     fallbackLng: 'en',

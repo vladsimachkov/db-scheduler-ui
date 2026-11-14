@@ -38,7 +38,11 @@ const showSql = 'showSql' in config ? Boolean(config.showSql) : false;
 
 const readOnly = 'readOnly' in config ? Boolean(config.readOnly) : false;
 
+const usersEnabled =
+  'usersEnabled' in config ? Boolean(config.usersEnabled) : false;
+
 export const getShowHistory = (): boolean => showHistory;
 export const getShowOverview = (): boolean => showOverview;
 export const getShowSql = (): boolean => showSql;
 export const getReadonly = (): boolean => readOnly;
+export const getUsersEnabled = (): boolean => usersEnabled;

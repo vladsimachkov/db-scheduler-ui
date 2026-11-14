@@ -11,13 +11,9 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { redirectToUi } from 'src/services/apiClient';
+import { apiGet } from 'src/services/apiClient';
 import { PollResponse } from 'src/models/PollResponse';
 import { TaskDetailsRequestParams } from 'src/models/TaskRequestParams';
-
-const API_BASE_URL: string =
-  (import.meta.env.VITE_API_BASE_URL as string) ??
-  window.location.origin + (window.CONTEXT_PATH || '') + '/db-scheduler-api';
 
 export const POLL_LOGS_QUERY_KEY = `logs/poll`;
 
@@ -54,18 +50,5 @@ export const pollLogs = async (
       params.taskInstanceExactMatch.toString(),
     );
 
-  const response = await fetch(`${API_BASE_URL}/logs/poll?${queryParams}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (response.status == 401) {
-    redirectToUi();
-  } else if (!response.ok) {
-    throw new Error(`Error polling tasks. Status: ${response.statusText}`);
-  }
-
-  return await response.json();
+  return apiGet<PollResponse>(`/logs/poll?${queryParams}`);
 };

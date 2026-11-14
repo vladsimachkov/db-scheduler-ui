@@ -39,6 +39,19 @@ afterEach(() => {
 });
 
 describe('apiClient', () => {
+  it('sends the CSRF header on every request', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(mockResponse(200, { body: { a: 1 } }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await apiGet<{ a: number }>('/thing');
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    const headers = init.headers as Record<string, string>;
+    expect(headers['X-Requested-With']).toBe('XMLHttpRequest');
+  });
+
   it('parses a JSON success body', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mockResponse(200, { body: { a: 1 } })));
     await expect(apiGet<{ a: number }>('/thing')).resolves.toEqual({ a: 1 });

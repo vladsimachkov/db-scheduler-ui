@@ -25,6 +25,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogoIcon } from 'src/assets/icons/Logo';
 import { ColorModeToggle } from 'src/components/common/ColorModeToggle';
+import { useAuth } from 'src/hooks/useAuth';
 import {
   getShowHistory,
   getShowOverview,
@@ -39,6 +40,8 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
+  const { t: tAuth } = useTranslation('auth');
+  const { usersEnabled, username, logout } = useAuth();
   const showHistory = getShowHistory();
   const showOverview = getShowOverview();
   const showSql = getShowSql();
@@ -189,6 +192,19 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
                 {t('common:nav.connections')}
               </Button>
             )}
+          </>
+        )}
+        {usersEnabled && username && (
+          <>
+            <Text color={'textMuted'}>{tAuth('signedInAs', { username })}</Text>
+            <Button
+              variant="ghost"
+              color={'brand'}
+              aria-label={tAuth('logout')}
+              onClick={() => logout().catch(() => undefined)}
+            >
+              {tAuth('logout')}
+            </Button>
           </>
         )}
         <Menu>

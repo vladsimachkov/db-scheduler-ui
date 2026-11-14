@@ -15,6 +15,8 @@ import { Box } from '@chakra-ui/react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { TopBar } from 'src/components/common/TopBar';
 import { LogList } from 'src/components/history/LogList';
+import { useAuth } from 'src/hooks/useAuth';
+import { LoginPage } from 'src/pages/LoginPage';
 import TaskList from 'src/components/scheduled/TaskList';
 import { OverviewPage } from 'src/pages/OverviewPage';
 import SqlConnectionsPage from 'src/pages/SqlConnectionsPage';
@@ -30,6 +32,16 @@ export const FrontPage: React.FC = () => {
   const showHistory = getShowHistory();
   const showOverview = getShowOverview();
   const showSql = getShowSql();
+  const { usersEnabled, authenticated, loading } = useAuth();
+
+  // The API is guarded server-side; this only decides what the SPA paints. While the first
+  // /auth/me is in flight nothing is rendered rather than flashing the task list.
+  if (usersEnabled && loading) {
+    return null;
+  }
+  if (usersEnabled && !authenticated) {
+    return <LoginPage />;
+  }
   return (
     <>
       <TopBar title={'DB Scheduler UI'} />

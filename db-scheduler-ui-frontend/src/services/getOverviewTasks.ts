@@ -11,30 +11,11 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { redirectToUi } from 'src/services/apiClient';
+import { apiGet } from 'src/services/apiClient';
 import { OverviewTask } from 'src/models/OverviewTask';
-
-const API_BASE_URL: string =
-  (import.meta.env.VITE_API_BASE_URL as string) ??
-  window.location.origin + (window.CONTEXT_PATH || '') + '/db-scheduler-api';
 
 export const OVERVIEW_TASKS_QUERY_KEY = 'overviewTasks';
 
 export const getOverviewTasks = async (): Promise<OverviewTask[]> => {
-  const response = await fetch(`${API_BASE_URL}/tasks/overview`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (response.status === 401) {
-    redirectToUi();
-  } else if (!response.ok) {
-    throw new Error(
-      `Error fetching overview tasks. Status: ${response.statusText}`,
-    );
-  }
-
-  return await response.json();
+  return apiGet<OverviewTask[]>('/tasks/overview');
 };

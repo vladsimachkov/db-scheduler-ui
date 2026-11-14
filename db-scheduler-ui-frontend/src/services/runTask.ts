@@ -11,11 +11,7 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { redirectToUi } from 'src/services/apiClient';
-const API_BASE_URL: string =
-  (import.meta.env.VITE_API_BASE_URL as string) ??
-  window.location.origin + (window.CONTEXT_PATH || '') + '/db-scheduler-api';
-
+import { apiPost } from 'src/services/apiClient';
 const runTask = async (id: string, name: string, scheduleTime?:Date) => {
 
   const queryParams = new URLSearchParams();
@@ -28,18 +24,7 @@ const runTask = async (id: string, name: string, scheduleTime?:Date) => {
       queryParams.append('scheduleTime', new Date().toISOString());
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/tasks/rerun?${queryParams}`,
-    {
-      method: 'POST',
-    },
-  );
-
-  if (response.status == 401) {
-    redirectToUi();
-  } else if (!response.ok) {
-    throw new Error(`Error executing task. Status: ${response.statusText}`);
-  }
+  await apiPost(`/tasks/rerun?${queryParams}`);
 };
 
 export default runTask;
