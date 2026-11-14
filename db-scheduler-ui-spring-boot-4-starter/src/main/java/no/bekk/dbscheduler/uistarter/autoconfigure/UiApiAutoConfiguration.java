@@ -191,9 +191,16 @@ public class UiApiAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  ConfigController configController(DbSchedulerUiProperties properties) {
+  ConfigController configController(
+      DbSchedulerUiProperties properties,
+      @Value("${db-scheduler-ui.users.enabled:false}") boolean usersEnabled) {
+    // the login screen only makes sense when the SQL feature (and with it schemas) is on
     return new ConfigController(
-        properties.history(), properties.overview(), properties::sql, properties::readOnly);
+        properties.history(),
+        properties.overview(),
+        properties::sql,
+        properties::readOnly,
+        () -> properties.sql() && usersEnabled);
   }
 
   @Bean

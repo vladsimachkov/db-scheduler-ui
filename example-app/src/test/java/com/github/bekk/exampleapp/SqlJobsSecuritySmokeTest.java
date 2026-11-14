@@ -244,5 +244,7 @@ class SqlJobsSecuritySmokeTest {
     ResponseEntity<String> result = userRestTemplate.getForEntity(api + "/config", String.class);
     assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(result.getBody()).contains("\"showSql\":true");
+    // users feature is off in this profile: the SPA must not show a login screen
+    assertThat(result.getBody()).contains("\"usersEnabled\":false");
   }
 }
