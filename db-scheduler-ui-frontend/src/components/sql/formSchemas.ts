@@ -66,7 +66,10 @@ export const sqlJobFormSchema = z
     scheduleType: z.enum(['cron', 'once']),
     cronExpression: z.string().max(100, 'tooLong'),
     runAt: z.instanceof(Date).nullable(),
-    script: z.string().trim().min(1, 'scriptRequired'),
+    // objects, not bare strings: react-hook-form's useFieldArray only paths arrays of objects
+    scripts: z
+      .array(z.object({ script: z.string().trim().min(1, 'scriptRequired') }))
+      .min(1),
     timeoutSeconds: z.string().trim(),
   })
   .superRefine((values, ctx) => {

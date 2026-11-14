@@ -13,11 +13,13 @@
  */
 import React, { useEffect, useState } from 'react';
 import {
+  Box,
   Button,
   FormControl,
   FormErrorMessage,
   FormLabel,
   HStack,
+  IconButton,
   Input,
   Modal,
   ModalBody,
@@ -31,11 +33,13 @@ import {
   Select,
   Stack,
   Text,
+  Tooltip,
   useToast,
   VStack,
 } from '@chakra-ui/react';
+import { AddIcon, SmallCloseIcon } from '@chakra-ui/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import CronInput from 'src/components/sql/CronInput';
@@ -63,7 +67,9 @@ function defaultValuesFor(initial?: SqlJob): SqlJobFormValues {
       initial && !initial.recurring && initial.nextRunTime
         ? new Date(initial.nextRunTime)
         : null,
-    script: initial?.script ?? '',
+    scripts: initial?.scripts?.length
+      ? initial.scripts.map((script) => ({ script }))
+      : [{ script: '' }],
     // The backend stores 0 as "use server default"; show the default instead of an
     // invalid 0 so editing such a job does not fail validation.
     timeoutSeconds: String(initial?.timeoutSeconds || 300),
@@ -99,6 +105,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
     resolver: zodResolver(sqlJobFormSchema),
     defaultValues: defaultValuesFor(initial),
   });
+  const { fields, append, remove } = useFieldArray({ control, name: 'scripts' });
 
   useEffect(() => {
     if (isOpen) {
@@ -134,7 +141,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
       name: values.name.trim(),
       description: values.description.trim() || undefined,
       connectionId: values.connectionId,
-      script: values.script,
+      scripts: values.scripts.map((entry) => entry.script.trim()),
       timeoutSeconds: Number(values.timeoutSeconds),
       cronExpression:
         values.scheduleType === 'cron'
@@ -268,25 +275,60 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                 </FormControl>
               )}
 
-              <FormControl isInvalid={!!errors.script}>
+              <Box>
                 <FormLabel>{t('script')}</FormLabel>
-                <Controller
-                  control={control}
-                  name="script"
-                  render={({ field }) => (
-                    <ScriptEditor
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder={'SELECT 1;'}
-                    />
-                  )}
-                />
-                {errors.script && (
-                  <FormErrorMessage>
-                    {formErrorText(t, errors.script.message, 'scriptRequired')}
-                  </FormErrorMessage>
-                )}
-              </FormControl>
+                <VStack spacing={3} align={'stretch'}>
+                  {fields.map((item, index) => (
+                    <Box key={item.id}>
+                      <HStack justifyContent={'space-between'} mb={1}>
+                        <Text fontSize={'sm'} fontWeight={'semibold'}>
+                          {t('scriptNumber', { number: index + 1 })}
+                        </Text>
+                        {fields.length > 1 && (
+                          <Tooltip label={t('removeScript')}>
+                            <IconButton
+                              aria-label={t('removeScript')}
+                              icon={<SmallCloseIcon boxSize={4} />}
+                              size={'sm'}
+                              variant={'ghost'}
+                              onClick={() => remove(index)}
+                            />
+                          </Tooltip>
+                        )}
+                      </HStack>
+                      <Controller
+                        control={control}
+                        name={`scripts.${index}.script`}
+                        render={({ field }) => (
+                          <ScriptEditor
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder={'SELECT 1;'}
+                          />
+                        )}
+                      />
+                      {errors.scripts?.[index]?.script && (
+                        <FormErrorMessage>
+                          {formErrorText(
+                            t,
+                            errors.scripts[index]?.script?.message,
+                            'scriptRequired',
+                          )}
+                        </FormErrorMessage>
+                      )}
+                    </Box>
+                  ))}
+                </VStack>
+                <Button
+                  mt={2}
+                  size={'sm'}
+                  variant={'outline'}
+                  leftIcon={<AddIcon boxSize={3} />}
+                  onClick={() => append({ script: '' })}
+                >
+                  {t('addScript')}
+                </Button>
+              </Box>
 
               {formError && (
                 <Text color="failed" fontSize={'sm'}>

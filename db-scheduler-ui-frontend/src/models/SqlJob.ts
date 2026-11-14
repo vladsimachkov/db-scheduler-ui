@@ -19,7 +19,7 @@ export interface SqlJob {
   description: string | null;
   connectionId: string;
   connectionName: string | null;
-  script: string;
+  scripts: string[];
   timeoutSeconds: number;
   cronExpression: string | null;
   recurring: boolean;
@@ -34,7 +34,7 @@ export interface SqlJobRequest {
   name: string;
   description?: string;
   connectionId: string;
-  script: string;
+  scripts: string[];
   timeoutSeconds?: number;
   cronExpression?: string;
   runAt?: string;

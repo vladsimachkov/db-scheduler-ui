@@ -43,7 +43,7 @@ const baseJob = {
   scheduleType: 'cron' as const,
   cronExpression: '0 0 3 * * ?',
   runAt: null,
-  script: 'SELECT 1;',
+  scripts: [{ script: 'SELECT 1;' }],
   timeoutSeconds: '300',
 };
 
@@ -109,9 +109,15 @@ describe('sqlJobFormSchema', () => {
     }
   });
 
-  it('requires a non-blank script', () => {
-    const result = sqlJobFormSchema.safeParse({ ...baseJob, script: '   ' });
-    expect(result.success).toBe(false);
-    expect(messagesFor(result.error, 'script')).toContain('scriptRequired');
+  it('requires a non-blank script in every list entry', () => {
+    const blank = sqlJobFormSchema.safeParse({
+      ...baseJob,
+      scripts: [{ script: 'SELECT 1;' }, { script: '  ' }],
+    });
+    expect(blank.success).toBe(false);
+    expect(messagesFor(blank.error, 'scripts')).toContain('scriptRequired');
+
+    const empty = sqlJobFormSchema.safeParse({ ...baseJob, scripts: [] });
+    expect(empty.success).toBe(false);
   });
 });
