@@ -19,6 +19,7 @@ import no.bekk.dbscheduler.ui.sql.repo.SqlConnectionRepository;
 import no.bekk.dbscheduler.ui.users.auth.AuthController;
 import no.bekk.dbscheduler.ui.users.auth.AuthSessionFilter;
 import no.bekk.dbscheduler.ui.users.auth.BootstrapAdminInitializer;
+import no.bekk.dbscheduler.ui.users.auth.SessionAccessGuard;
 import no.bekk.dbscheduler.ui.users.config.DbSchedulerUiUsersProperties;
 import no.bekk.dbscheduler.ui.users.crypto.PasswordHasher;
 import no.bekk.dbscheduler.ui.users.repo.GrantRepository;
@@ -64,6 +65,12 @@ public class DbSchedulerUiUsersAutoConfiguration {
   @Bean
   GrantRepository grantRepository(JdbcTemplate jdbcTemplate) {
     return new GrantRepository(jdbcTemplate);
+  }
+
+  @Bean
+  SessionAccessGuard sqlAccessGuard(GrantRepository grants) {
+    // picked up by the sql services through ObjectProvider<SqlAccessGuard>
+    return new SessionAccessGuard(grants);
   }
 
   @Bean

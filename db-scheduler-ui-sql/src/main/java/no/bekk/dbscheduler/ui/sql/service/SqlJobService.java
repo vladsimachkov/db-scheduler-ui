@@ -28,7 +28,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import no.bekk.dbscheduler.ui.sql.dto.SqlJobDto;
@@ -60,46 +62,83 @@ public class SqlJobService {
   private final SqlConnectionRepository connections;
   private final SqlJobExecutionRepository executions;
 
+  /** {@code null} when the users feature is off — then every job is visible, as before. */
+  private final SqlAccessGuard guard;
+
   public SqlJobService(
       SchedulerClient client,
       RecurringTaskWithPersistentSchedule<SqlJobData> recurringTask,
       OneTimeTask<SqlJobData> onceTask,
       SqlConnectionRepository connections,
       SqlJobExecutionRepository executions) {
+    this(client, recurringTask, onceTask, connections, executions, null);
+  }
+
+  public SqlJobService(
+      SchedulerClient client,
+      RecurringTaskWithPersistentSchedule<SqlJobData> recurringTask,
+      OneTimeTask<SqlJobData> onceTask,
+      SqlConnectionRepository connections,
+      SqlJobExecutionRepository executions,
+      SqlAccessGuard guard) {
     this.client = client;
     this.recurringTask = recurringTask;
     this.onceTask = onceTask;
     this.connections = connections;
     this.executions = executions;
+    this.guard = guard;
   }
 
   public List<SqlJobDto> listJobs() {
+    // null means "all schemas" (admin or users feature off); unassigned jobs are never in a
+    // granted set, so they stay admin-only
+    Set<String> visibleSchemas = guard == null ? null : guard.accessibleSchemaIds();
+    // names only from visible connections: a legacy job may reference a connection that sits in
+    // a hidden schema, and its name must not leak into the DTO
     Map<String, String> connectionNames =
         connections.findAll().stream()
+            .filter(c -> visible(visibleSchemas, c.schemaId()))
             .collect(Collectors.toMap(SqlJobConnection::id, SqlJobConnection::name, (a, b) -> a));
     List<SqlJobDto> jobs = new ArrayList<>();
     for (ScheduledExecution<SqlJobData> execution : scheduled(SqlScriptKind.RECURRING)) {
-      jobs.add(toDto(execution, true, connectionNames));
+      if (visible(visibleSchemas, execution.getData().getSchemaId())) {
+        jobs.add(toDto(execution, true, connectionNames));
+      }
     }
     for (ScheduledExecution<SqlJobData> execution : scheduled(SqlScriptKind.ONCE)) {
-      jobs.add(toDto(execution, false, connectionNames));
+      if (visible(visibleSchemas, execution.getData().getSchemaId())) {
+        jobs.add(toDto(execution, false, connectionNames));
+      }
     }
     jobs.sort(
         Comparator.comparing(SqlJobDto::nextRunTime, Comparator.nullsLast(Instant::compareTo)));
     return jobs;
   }
 
+  private static boolean visible(Set<String> visibleSchemas, String schemaId) {
+    // null-safe: a granted set is an arbitrary Set and may reject null (e.g. Set.of)
+    return visibleSchemas == null || (schemaId != null && visibleSchemas.contains(schemaId));
+  }
+
   public SqlJobDto getJob(String jobId) {
     return find(jobId)
+        .filter(this::visibleJob)
         .map(found -> toDto(found.execution(), found.recurring(), connectionNames()))
         .orElseThrow(
             () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: " + jobId));
   }
 
+  /** True when the current user may see the job; invisible jobs answer as 404 everywhere. */
+  private boolean visibleJob(Found found) {
+    return guard == null || guard.canAccess(found.execution().getData().getSchemaId());
+  }
+
   public SqlJobDto create(SqlJobRequest request) {
-    validate(request);
+    SqlJobConnection connection = validate(request);
+    String schemaId = normalizeSchema(request.schemaId());
+    enforceSchema(schemaId, connection);
     String jobId = UUID.randomUUID().toString();
-    SqlJobData data = toData(jobId, request, request.schemaId());
+    SqlJobData data = toData(jobId, request, schemaId);
     boolean created;
     if (data.isRecurring()) {
       created = client.scheduleIfNotExists(recurringTask.schedulableInstance(jobId, data));
@@ -115,16 +154,14 @@ public class SqlJobService {
   }
 
   public SqlJobDto update(String jobId, SqlJobRequest request) {
-    validate(request);
-    Found existing =
-        find(jobId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: " + jobId));
+    SqlJobConnection connection = validate(request);
+    Found existing = requireVisible(jobId);
     // a request that omits schemaId keeps the job's current assignment (no silent unassignment)
     String schemaId =
         request.schemaId() == null || request.schemaId().isBlank()
             ? existing.execution().getData().getSchemaId()
             : request.schemaId().trim();
+    enforceSchema(schemaId, connection);
     SqlJobData data = toData(jobId, request, schemaId);
     if (existing.recurring() && data.isRecurring()) {
       clientOp(() -> client.reschedule(recurringTask.schedulableInstance(jobId, data)));
@@ -152,24 +189,37 @@ public class SqlJobService {
    * state in the scheduled execution.
    */
   public void runNow(String jobId) {
-    Found existing =
-        find(jobId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: " + jobId));
+    Found existing = requireVisible(jobId);
     clientOp(
         () -> client.reschedule(existingTaskInstance(existing.recurring(), jobId), Instant.now()));
   }
 
   public void delete(String jobId) {
-    Found existing =
-        find(jobId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: " + jobId));
+    Found existing = requireVisible(jobId);
     clientOp(() -> client.cancel(existingTaskInstance(existing.recurring(), jobId)));
   }
 
   public List<SqlJobExecution> executionsFor(String jobId, int limit) {
+    // Only guard jobs that are still scheduled: history of jobs that already ran (one-time jobs
+    // are deleted on completion) stays readable — the row is gone, so there is no schema to check.
+    if (guard != null) {
+      find(jobId)
+          .ifPresent(
+              found -> {
+                if (!visibleJob(found)) {
+                  throw new ResponseStatusException(
+                      HttpStatus.NOT_FOUND, "Job not found: " + jobId);
+                }
+              });
+    }
     return executions.findRecentByJob(jobId, Math.min(Math.max(1, limit), 500));
+  }
+
+  private Found requireVisible(String jobId) {
+    return find(jobId)
+        .filter(this::visibleJob)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: " + jobId));
   }
 
   /**
@@ -193,7 +243,7 @@ public class SqlJobService {
     return next;
   }
 
-  private void validate(SqlJobRequest request) {
+  private SqlJobConnection validate(SqlJobRequest request) {
     if (request.isRecurring()) {
       try {
         new CronSchedule(request.cronExpression().trim());
@@ -202,9 +252,43 @@ public class SqlJobService {
             HttpStatus.BAD_REQUEST, "Invalid cron expression: " + e.getMessage(), e);
       }
     }
-    if (connections.findById(request.connectionId()).isEmpty()) {
+    SqlJobConnection connection =
+        connections
+            .findById(request.connectionId())
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Unknown connection: " + request.connectionId()));
+    if (guard != null && !guard.canAccess(connection.schemaId())) {
+      // a connection in a hidden schema must be indistinguishable from a nonexistent one
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Unknown connection: " + request.connectionId());
+    }
+    return connection;
+  }
+
+  private static String normalizeSchema(String schemaId) {
+    return schemaId == null || schemaId.isBlank() ? null : schemaId.trim();
+  }
+
+  /**
+   * Schema rules for create/update: a non-admin may only place a job in a schema they were granted
+   * (invisible schemas answer 404, a missing choice answers 400), and the job's connection must
+   * belong to the same schema. Admins may also create unassigned (legacy-style) jobs.
+   */
+  private void enforceSchema(String schemaId, SqlJobConnection connection) {
+    if (guard == null) {
+      return;
+    }
+    if (!guard.isAdmin()) {
+      if (schemaId == null) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A schema is required");
+      }
+      guard.require(schemaId);
+    }
+    if (!Objects.equals(schemaId, connection.schemaId())) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, "Connection must belong to the job's schema");
     }
   }
 
@@ -264,7 +348,9 @@ public class SqlJobService {
   }
 
   private Map<String, String> connectionNames() {
+    Set<String> visibleSchemas = guard == null ? null : guard.accessibleSchemaIds();
     return connections.findAll().stream()
+        .filter(c -> visible(visibleSchemas, c.schemaId()))
         .collect(Collectors.toMap(SqlJobConnection::id, SqlJobConnection::name, (a, b) -> a));
   }
 

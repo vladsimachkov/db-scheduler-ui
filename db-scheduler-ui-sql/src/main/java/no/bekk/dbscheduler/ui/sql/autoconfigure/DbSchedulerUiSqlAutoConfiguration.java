@@ -31,10 +31,12 @@ import no.bekk.dbscheduler.ui.sql.model.TriggerType;
 import no.bekk.dbscheduler.ui.sql.pool.ConnectionPoolManager;
 import no.bekk.dbscheduler.ui.sql.repo.SqlConnectionRepository;
 import no.bekk.dbscheduler.ui.sql.repo.SqlJobExecutionRepository;
+import no.bekk.dbscheduler.ui.sql.service.SqlAccessGuard;
 import no.bekk.dbscheduler.ui.sql.service.SqlConnectionService;
 import no.bekk.dbscheduler.ui.sql.service.SqlJobService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -126,8 +128,13 @@ public class DbSchedulerUiSqlAutoConfiguration {
       RecurringTaskWithPersistentSchedule<SqlJobData> sqlScriptTask,
       OneTimeTask<SqlJobData> sqlScriptOnceTask,
       SqlConnectionRepository connections,
-      SqlJobExecutionRepository executions) {
-    return new SqlJobService(client, sqlScriptTask, sqlScriptOnceTask, connections, executions);
+      SqlJobExecutionRepository executions,
+      ObjectProvider<SqlAccessGuard> guard) {
+    // The guard bean only exists when the users feature is on; without it every job is visible.
+    // getIfAvailable (not getIfUnique) is deliberate: a second guard bean would fail startup
+    // loudly rather than silently disabling enforcement.
+    return new SqlJobService(
+        client, sqlScriptTask, sqlScriptOnceTask, connections, executions, guard.getIfAvailable());
   }
 
   @Bean
@@ -135,8 +142,9 @@ public class DbSchedulerUiSqlAutoConfiguration {
       SqlConnectionRepository repository,
       ConnectionPoolManager pools,
       CredentialCipher cipher,
-      SchedulerClient client) {
-    return new SqlConnectionService(repository, pools, cipher, client);
+      SchedulerClient client,
+      ObjectProvider<SqlAccessGuard> guard) {
+    return new SqlConnectionService(repository, pools, cipher, client, guard.getIfAvailable());
   }
 
   @Bean

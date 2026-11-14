@@ -20,6 +20,8 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.sql.DataSource;
@@ -46,35 +48,63 @@ public class SqlConnectionService {
   private final CredentialCipher cipher;
   private final SchedulerClient client;
 
+  /** {@code null} when the users feature is off — then every connection is visible, as before. */
+  private final SqlAccessGuard guard;
+
   public SqlConnectionService(
       SqlConnectionRepository repository,
       ConnectionPoolManager pools,
       CredentialCipher cipher,
       SchedulerClient client) {
+    this(repository, pools, cipher, client, null);
+  }
+
+  public SqlConnectionService(
+      SqlConnectionRepository repository,
+      ConnectionPoolManager pools,
+      CredentialCipher cipher,
+      SchedulerClient client,
+      SqlAccessGuard guard) {
     this.repository = repository;
     this.pools = pools;
     this.cipher = cipher;
     this.client = client;
+    this.guard = guard;
   }
 
   public List<SqlConnectionDto> list() {
+    // null means "all schemas" (admin or users feature off); unassigned connections stay
+    // admin-only because a granted set never contains null
+    Set<String> visibleSchemas = guard == null ? null : guard.accessibleSchemaIds();
     return repository.findAll().stream()
+        // null-safe: a granted set is an arbitrary Set and may reject null (e.g. Set.of)
+        .filter(
+            c ->
+                visibleSchemas == null
+                    || (c.schemaId() != null && visibleSchemas.contains(c.schemaId())))
         .map(SqlConnectionService::toDto)
         .collect(Collectors.toList());
   }
 
   public SqlConnectionDto get(String id) {
-    return toDto(find(id));
+    return toDto(findVisible(id));
   }
 
   public SqlConnectionDto create(SqlConnectionRequest request) {
     validatePropertiesJson(request.propertiesJson());
     Instant now = Instant.now();
+    String schemaId = blankToNull(request.schemaId());
+    if (guard != null && !guard.isAdmin()) {
+      if (schemaId == null) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A schema is required");
+      }
+      guard.require(schemaId);
+    }
     SqlJobConnection connection =
         new SqlJobConnection(
             UUID.randomUUID().toString(),
             request.name(),
-            blankToNull(request.schemaId()),
+            schemaId,
             request.dialect(),
             request.jdbcUrl(),
             blankToNull(request.driverClass()),
@@ -89,7 +119,17 @@ public class SqlConnectionService {
 
   public SqlConnectionDto update(String id, SqlConnectionRequest request) {
     validatePropertiesJson(request.propertiesJson());
-    SqlJobConnection existing = find(id);
+    SqlJobConnection existing = findVisible(id);
+    String effectiveSchema =
+        request.schemaId() == null || request.schemaId().isBlank()
+            ? existing.schemaId()
+            : request.schemaId().trim();
+    if (guard != null
+        && !guard.isAdmin()
+        && !Objects.equals(effectiveSchema, existing.schemaId())) {
+      // moving into another schema requires a grant on the target as well
+      guard.require(effectiveSchema);
+    }
     String password;
     if (Boolean.TRUE.equals(request.clearPassword())) {
       password = null;
@@ -103,9 +143,7 @@ public class SqlConnectionService {
             existing.id(),
             request.name(),
             // a request that omits schemaId keeps the current assignment (no silent unassignment)
-            request.schemaId() == null || request.schemaId().isBlank()
-                ? existing.schemaId()
-                : request.schemaId().trim(),
+            effectiveSchema,
             request.dialect(),
             request.jdbcUrl(),
             blankToNull(request.driverClass()),
@@ -120,7 +158,7 @@ public class SqlConnectionService {
   }
 
   public void delete(String id) {
-    find(id);
+    findVisible(id);
     boolean inUse = referencedByJobs(id);
     if (inUse) {
       throw new ResponseStatusException(
@@ -131,7 +169,7 @@ public class SqlConnectionService {
   }
 
   public ConnectionTestResult test(String id) {
-    SqlJobConnection connection = find(id);
+    SqlJobConnection connection = findVisible(id);
     try {
       DataSource pool = pools.poolFor(connection);
       try (Connection jdbc = pool.getConnection()) {
@@ -164,6 +202,15 @@ public class SqlConnectionService {
         .findById(id)
         .orElseThrow(
             () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Connection not found: " + id));
+  }
+
+  /** Like {@link #find}, but a connection in a schema the caller cannot see answers as 404. */
+  private SqlJobConnection findVisible(String id) {
+    SqlJobConnection connection = find(id);
+    if (guard != null && !guard.canAccess(connection.schemaId())) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Connection not found: " + id);
+    }
+    return connection;
   }
 
   private static void validatePropertiesJson(String propertiesJson) {
