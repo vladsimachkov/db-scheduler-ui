@@ -158,6 +158,37 @@ Oracle, Trino, Impala — и любая другая по JDBC. Хранилищ
      <version>4xx</version>
    </dependency>
    <!-- Impala: Cloudera hive-jdbc — установите в локальный репозиторий вручную -->
+   <!-- MySQL -->
+   <dependency>
+     <groupId>com.mysql</groupId>
+     <artifactId>mysql-connector-j</artifactId>
+     <version>9.x</version>
+   </dependency>
+   <!-- MariaDB -->
+   <dependency>
+     <groupId>org.mariadb.jdbc</groupId>
+     <artifactId>mariadb-java-client</artifactId>
+     <version>3.x</version>
+   </dependency>
+   <!-- PostgreSQL -->
+   <dependency>
+     <groupId>org.postgresql</groupId>
+     <artifactId>postgresql</artifactId>
+     <version>42.x</version>
+   </dependency>
+   <!-- MS SQL Server -->
+   <dependency>
+     <groupId>com.microsoft.sqlserver</groupId>
+     <artifactId>mssql-jdbc</artifactId>
+     <version>12.x</version>
+   </dependency>
+   <!-- ClickHouse (classifier all — со встроенным HTTP-клиентом) -->
+   <dependency>
+     <groupId>com.clickhouse</groupId>
+     <artifactId>clickhouse-jdbc</artifactId>
+     <version>0.8.x</version>
+     <classifier>all</classifier>
+   </dependency>
    ```
 
    Класс драйвера определяется по префиксу JDBC URL (`DriverManager`), указывать его не нужно.
