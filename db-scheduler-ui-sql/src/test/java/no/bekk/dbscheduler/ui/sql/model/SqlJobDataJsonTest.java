@@ -28,7 +28,7 @@ class SqlJobDataJsonTest {
   void serializesWithoutSelfReferenceCycle() throws Exception {
     SqlJobData data =
         new SqlJobData(
-            "job-1", "Nightly load", "desc", "conn-1", "SELECT 1;", 60, "0 0 * * * *", "UTC");
+            "job-1", "Nightly load", "desc", "conn-1", "SELECT 1;", null, 60, "0 0 * * * *", "UTC");
     String json = new ObjectMapper().writeValueAsString(data);
     assertThat(json).contains("\"jobId\":\"job-1\"").contains("\"recurring\":true");
     assertThat(json).doesNotContain("\"data\"").doesNotContain("\"schedule\"");

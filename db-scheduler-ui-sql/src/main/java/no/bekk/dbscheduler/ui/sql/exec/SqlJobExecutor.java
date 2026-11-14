@@ -89,34 +89,40 @@ public class SqlJobExecutor implements DisposableBean {
             data.getTimeoutSeconds() > 0
                 ? data.getTimeoutSeconds()
                 : properties.defaultTimeoutSeconds());
-    List<String> statements = SqlScriptSplitter.split(data.getScript(), connection.dialect());
+    List<String> scripts = data.getScripts();
 
     Instant started = Instant.now();
     int executed = 0;
     long rows = 0;
     boolean capped = false;
+    int scriptIndex = 0;
     try (Connection jdbc = pools.poolFor(connection).getConnection()) {
       jdbc.setAutoCommit(true);
-      for (String sql : statements) {
-        try (Statement statement = jdbc.createStatement()) {
-          statement.setQueryTimeout(timeoutSeconds);
-          ScheduledFuture<?> cancel = armWatchdog(statement, timeoutSeconds);
-          try {
-            boolean hasResultSet = statement.execute(sql);
-            if (hasResultSet) {
-              long[] counted = countRows(statement, capped);
-              rows += counted[0];
-              capped = capped || counted[1] == 1;
-            } else {
-              int updateCount = statement.getUpdateCount();
-              if (updateCount > 0) {
-                rows += updateCount;
+      // Scripts run strictly in order; a failing statement stops everything (fail-fast),
+      // leaving earlier statements' effects committed (autoCommit per statement).
+      for (String script : scripts) {
+        scriptIndex++;
+        for (String sql : SqlScriptSplitter.split(script, connection.dialect())) {
+          try (Statement statement = jdbc.createStatement()) {
+            statement.setQueryTimeout(timeoutSeconds);
+            ScheduledFuture<?> cancel = armWatchdog(statement, timeoutSeconds);
+            try {
+              boolean hasResultSet = statement.execute(sql);
+              if (hasResultSet) {
+                long[] counted = countRows(statement, capped);
+                rows += counted[0];
+                capped = capped || counted[1] == 1;
+              } else {
+                int updateCount = statement.getUpdateCount();
+                if (updateCount > 0) {
+                  rows += updateCount;
+                }
               }
+            } finally {
+              cancel.cancel(false);
             }
-          } finally {
-            cancel.cancel(false);
+            executed++;
           }
-          executed++;
         }
       }
       SqlJobExecution result =
@@ -154,8 +160,10 @@ public class SqlJobExecutor implements DisposableBean {
           e.getClass().getName(),
           truncate(e.getMessage()),
           trigger);
+      String where =
+          scripts.size() > 1 ? " (script " + scriptIndex + " of " + scripts.size() + ")" : "";
       throw new SqlJobExecutionException(
-          "SQL job " + data.getJobId() + " failed after " + executed + " statement(s)", e);
+          "SQL job " + data.getJobId() + " failed after " + executed + " statement(s)" + where, e);
     }
   }
 
@@ -212,7 +220,7 @@ public class SqlJobExecutor implements DisposableBean {
             taskInstance,
             connectionId,
             dialect,
-            data.getScript(),
+            String.join("\n\n", data.getScripts()),
             started,
             finished,
             succeeded,

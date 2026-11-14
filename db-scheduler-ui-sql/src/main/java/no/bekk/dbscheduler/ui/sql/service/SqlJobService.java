@@ -210,6 +210,7 @@ public class SqlJobService {
         request.description(),
         request.connectionId(),
         request.script(),
+        null,
         request.timeoutSeconds() != null ? request.timeoutSeconds() : 0,
         request.isRecurring() ? request.cronExpression().trim() : null,
         // jobs always run in the server's time zone; the data field is vestigial

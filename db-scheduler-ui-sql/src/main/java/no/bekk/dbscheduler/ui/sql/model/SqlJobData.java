@@ -18,6 +18,7 @@ import com.github.kagkarlsson.scheduler.task.helper.ScheduleAndData;
 import com.github.kagkarlsson.scheduler.task.schedule.Schedule;
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * The full definition of a SQL job, carried inside the scheduler's {@code task_data} column.
@@ -36,7 +37,15 @@ public class SqlJobData implements ScheduleAndData, Serializable {
   private final String name;
   private final String description;
   private final String connectionId;
+
+  /** Legacy single-script source, kept for deserialization of older {@code task_data} blobs. */
   private final String script;
+
+  /**
+   * Ordered scripts executed one after another; {@code null} on blobs persisted before the list.
+   */
+  private final List<String> scripts;
+
   private final int timeoutSeconds;
   private final String cronExpression;
 
@@ -53,6 +62,7 @@ public class SqlJobData implements ScheduleAndData, Serializable {
       String description,
       String connectionId,
       String script,
+      List<String> scripts,
       int timeoutSeconds,
       String cronExpression,
       String zoneId) {
@@ -61,6 +71,7 @@ public class SqlJobData implements ScheduleAndData, Serializable {
     this.description = description;
     this.connectionId = connectionId;
     this.script = script;
+    this.scripts = scripts;
     this.timeoutSeconds = timeoutSeconds;
     this.cronExpression = cronExpression;
     this.zoneId = zoneId;
@@ -84,6 +95,14 @@ public class SqlJobData implements ScheduleAndData, Serializable {
 
   public String getScript() {
     return script;
+  }
+
+  /** The ordered scripts to run: the list when present, otherwise the legacy single script. */
+  public List<String> getScripts() {
+    if (scripts != null && !scripts.isEmpty()) {
+      return scripts;
+    }
+    return script != null && !script.isBlank() ? List.of(script) : List.of();
   }
 
   public int getTimeoutSeconds() {

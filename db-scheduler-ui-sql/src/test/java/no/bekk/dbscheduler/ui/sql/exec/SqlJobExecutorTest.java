@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.Instant;
+import java.util.List;
 import javax.sql.DataSource;
 import no.bekk.dbscheduler.ui.sql.SqlTestSchema;
 import no.bekk.dbscheduler.ui.sql.config.DbSchedulerUiSqlProperties;
@@ -78,7 +79,13 @@ class SqlJobExecutorTest {
   }
 
   private static SqlJobData job(String script, int timeoutSeconds) {
-    return new SqlJobData("job-1", "Test job", null, "conn-1", script, timeoutSeconds, null, null);
+    return new SqlJobData(
+        "job-1", "Test job", null, "conn-1", script, null, timeoutSeconds, null, null);
+  }
+
+  private static SqlJobData job(List<String> scripts, int timeoutSeconds) {
+    return new SqlJobData(
+        "job-1", "Test job", null, "conn-1", null, scripts, timeoutSeconds, null, null);
   }
 
   @Test
@@ -123,9 +130,49 @@ class SqlJobExecutorTest {
   }
 
   @Test
+  void executesScriptsInOrderAndRecordsThemTogether() {
+    SqlJobExecution result =
+        executor(new DbSchedulerUiSqlProperties("", 300, 10_000_000L))
+            .execute(
+                job(
+                    List.of(
+                        "CREATE TABLE ord(x INT); INSERT INTO ord VALUES (1);",
+                        "INSERT INTO ord VALUES (2)"),
+                    300),
+                "job-1",
+                TriggerType.SCHEDULE);
+
+    assertThat(result.succeeded()).isTrue();
+    assertThat(result.statementsExecuted()).isEqualTo(3);
+    assertThat(target.queryForObject("select count(*) from ord", Integer.class)).isEqualTo(2);
+
+    SqlJobExecution stored = executions.findRecentByJob("job-1", 10).get(0);
+    assertThat(stored.scriptText())
+        .contains("CREATE TABLE ord")
+        .contains("INSERT INTO ord VALUES (2)");
+  }
+
+  @Test
+  void failureInSecondScriptStopsAndNamesTheScript() {
+    SqlJobExecutor executor = executor(new DbSchedulerUiSqlProperties("", 300, 10_000_000L));
+    SqlJobData data = job(List.of("CREATE TABLE s1(x INT)", "SELECT * FROM missing_table"), 300);
+
+    assertThatExceptionOfType(SqlJobExecutionException.class)
+        .isThrownBy(() -> executor.execute(data, "job-1", TriggerType.SCHEDULE))
+        .withMessageContaining("script 2 of 2");
+
+    SqlJobExecution stored = executions.findRecentByJob("job-1", 10).get(0);
+    assertThat(stored.succeeded()).isFalse();
+    assertThat(stored.statementsExecuted()).isEqualTo(1);
+    // first script's effect survived (autoCommit, fail-fast stops only what follows)
+    assertThat(target.queryForObject("select count(*) from s1", Integer.class)).isZero();
+  }
+
+  @Test
   void unknownConnectionFails() {
     SqlJobExecutor executor = executor(new DbSchedulerUiSqlProperties("", 300, 10_000_000L));
-    SqlJobData data = new SqlJobData("job-x", "x", null, "missing", "SELECT 1", 300, null, null);
+    SqlJobData data =
+        new SqlJobData("job-x", "x", null, "missing", "SELECT 1", null, 300, null, null);
     assertThatExceptionOfType(SqlJobExecutionException.class)
         .isThrownBy(() -> executor.execute(data, "job-x", TriggerType.SCHEDULE))
         .withMessageContaining("unknown connection");
