@@ -23,6 +23,8 @@
   "addScript": "Add script",
   "removeScript": "Remove script",
   "dragToReorder": "Drag to reorder",
+  "collapseScript": "Collapse script",
+  "expandScript": "Expand script",
   "scriptRequired": "Enter a SQL script",
   "timeout": "Per-statement timeout, seconds",
   "runAt": "Run at",

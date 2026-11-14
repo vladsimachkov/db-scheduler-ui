@@ -37,7 +37,13 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { AddIcon, DragHandleIcon, SmallCloseIcon } from '@chakra-ui/icons';
+import {
+  AddIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  DragHandleIcon,
+  SmallCloseIcon,
+} from '@chakra-ui/icons';
 import {
   closestCenter,
   DndContext,
@@ -93,11 +99,22 @@ function defaultValuesFor(initial?: SqlJob): SqlJobFormValues {
   };
 }
 
+function firstLine(script: string): string {
+  return script.split('\n').find((line) => line.trim())?.trim() ?? '';
+}
+
 interface SortableScriptProps {
   id: string;
   dragLabel: string;
   header: React.ReactNode;
   trailing?: React.ReactNode;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
+  collapseLabel: string;
+  expandLabel: string;
+  /** First non-blank line, shown in place of the editor while collapsed. */
+  preview?: string;
+  error?: React.ReactNode;
   children: React.ReactNode;
 }
 
@@ -111,6 +128,12 @@ const SortableScript: React.FC<SortableScriptProps> = ({
   dragLabel,
   header,
   trailing,
+  collapsed,
+  onToggleCollapse,
+  collapseLabel,
+  expandLabel,
+  preview,
+  error,
   children,
 }) => {
   const {
@@ -132,7 +155,7 @@ const SortableScript: React.FC<SortableScriptProps> = ({
         zIndex: isDragging ? 1 : undefined,
       }}
     >
-      <HStack justifyContent={'space-between'} mb={1}>
+      <HStack justifyContent={'space-between'} mb={collapsed ? 0 : 1}>
         <HStack spacing={1}>
           <IconButton
             aria-label={dragLabel}
@@ -145,9 +168,33 @@ const SortableScript: React.FC<SortableScriptProps> = ({
           />
           {header}
         </HStack>
-        {trailing}
+        <HStack spacing={0}>
+          <Tooltip label={collapsed ? expandLabel : collapseLabel}>
+            <IconButton
+              aria-label={collapsed ? expandLabel : collapseLabel}
+              icon={
+                collapsed ? (
+                  <ChevronDownIcon boxSize={4} />
+                ) : (
+                  <ChevronUpIcon boxSize={4} />
+                )
+              }
+              size={'sm'}
+              variant={'ghost'}
+              onClick={onToggleCollapse}
+            />
+          </Tooltip>
+          {trailing}
+        </HStack>
       </HStack>
-      {children}
+      {collapsed ? (
+        <Text fontSize={'xs'} color={'textMuted'} isTruncated>
+          {preview || ' '}
+        </Text>
+      ) : (
+        children
+      )}
+      {error}
     </Box>
   );
 };
@@ -169,6 +216,8 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
   const toast = useToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
+  // keyed on useFieldArray item ids — stable while the modal stays open
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const {
     register,
@@ -205,6 +254,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
     if (isOpen) {
       reset(defaultValuesFor(initial));
       setFormError(null);
+      setCollapsed({});
     }
     // Keyed on the stable id, not the object: polling hands us a fresh SqlJob
     // instance every 2s, which would otherwise wipe in-progress edits.
@@ -387,6 +437,27 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                           key={item.id}
                           id={item.id}
                           dragLabel={t('dragToReorder')}
+                          collapsed={!!collapsed[item.id]}
+                          onToggleCollapse={() =>
+                            setCollapsed((prev) => ({
+                              ...prev,
+                              [item.id]: !prev[item.id],
+                            }))
+                          }
+                          collapseLabel={t('collapseScript')}
+                          expandLabel={t('expandScript')}
+                          preview={firstLine(item.script)}
+                          error={
+                            errors.scripts?.[index]?.script ? (
+                              <FormErrorMessage>
+                                {formErrorText(
+                                  t,
+                                  errors.scripts[index]?.script?.message,
+                                  'scriptRequired',
+                                )}
+                              </FormErrorMessage>
+                            ) : undefined
+                          }
                           header={
                             <Text fontSize={'sm'} fontWeight={'semibold'}>
                               {t('scriptNumber', { number: index + 1 })}
@@ -417,15 +488,6 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                               />
                             )}
                           />
-                          {errors.scripts?.[index]?.script && (
-                            <FormErrorMessage>
-                              {formErrorText(
-                                t,
-                                errors.scripts[index]?.script?.message,
-                                'scriptRequired',
-                              )}
-                            </FormErrorMessage>
-                          )}
                         </SortableScript>
                       ))}
                     </VStack>

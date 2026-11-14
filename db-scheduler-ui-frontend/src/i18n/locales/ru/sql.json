@@ -23,6 +23,8 @@
   "addScript": "Добавить скрипт",
   "removeScript": "Удалить скрипт",
   "dragToReorder": "Перетащите, чтобы изменить порядок",
+  "collapseScript": "Свернуть скрипт",
+  "expandScript": "Развернуть скрипт",
   "scriptRequired": "Введите SQL-скрипт",
   "timeout": "Таймаут на оператор, секунд",
   "runAt": "Выполнить в",
