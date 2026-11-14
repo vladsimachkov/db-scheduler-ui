@@ -33,4 +33,21 @@ class SqlJobDataJsonTest {
     assertThat(json).contains("\"jobId\":\"job-1\"").contains("\"recurring\":true");
     assertThat(json).doesNotContain("\"data\"").doesNotContain("\"schedule\"");
   }
+
+  @Test
+  void serializesSchemaId() throws Exception {
+    SqlJobData data =
+        new SqlJobData(
+            "job-1",
+            "Nightly load",
+            "desc",
+            "conn-1",
+            null,
+            java.util.List.of("SELECT 1;"),
+            60,
+            "0 0 * * * *",
+            null,
+            "schema-1");
+    assertThat(new ObjectMapper().writeValueAsString(data)).contains("\"schemaId\":\"schema-1\"");
+  }
 }

@@ -29,6 +29,7 @@ import java.util.List;
 public record SqlJobRequest(
     @NotBlank @Size(max = 100) String name,
     @Size(max = 1000) String description,
+    @Size(max = 50) String schemaId,
     @NotBlank String connectionId,
     @NotEmpty @Size(max = 20, message = "at most 20 scripts")
         List<@NotBlank @Size(max = 65536, message = "script must not exceed 64 KiB") String>

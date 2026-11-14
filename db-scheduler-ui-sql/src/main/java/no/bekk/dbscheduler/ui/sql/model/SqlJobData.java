@@ -50,6 +50,12 @@ public class SqlJobData implements ScheduleAndData, Serializable {
   private final String cronExpression;
 
   /**
+   * Owning schema id; {@code null} on blobs persisted before the users feature — those stay
+   * admin-only until an admin assigns them to a schema.
+   */
+  private final String schemaId;
+
+  /**
    * Vestigial: jobs always fire in the server's time zone. The field is kept only so that
    * already-persisted {@code task_data} blobs deserialize cleanly (this class is Java-serialized
    * with a fixed serialVersionUID) — it is never read and never set for new or edited jobs.
@@ -66,6 +72,30 @@ public class SqlJobData implements ScheduleAndData, Serializable {
       int timeoutSeconds,
       String cronExpression,
       String zoneId) {
+    this(
+        jobId,
+        name,
+        description,
+        connectionId,
+        script,
+        scripts,
+        timeoutSeconds,
+        cronExpression,
+        zoneId,
+        null);
+  }
+
+  public SqlJobData(
+      String jobId,
+      String name,
+      String description,
+      String connectionId,
+      String script,
+      List<String> scripts,
+      int timeoutSeconds,
+      String cronExpression,
+      String zoneId,
+      String schemaId) {
     this.jobId = jobId;
     this.name = name;
     this.description = description;
@@ -75,6 +105,7 @@ public class SqlJobData implements ScheduleAndData, Serializable {
     this.timeoutSeconds = timeoutSeconds;
     this.cronExpression = cronExpression;
     this.zoneId = zoneId;
+    this.schemaId = schemaId;
   }
 
   public String getJobId() {
@@ -111,6 +142,10 @@ public class SqlJobData implements ScheduleAndData, Serializable {
 
   public String getCronExpression() {
     return cronExpression;
+  }
+
+  public String getSchemaId() {
+    return schemaId;
   }
 
   public boolean isRecurring() {

@@ -21,6 +21,7 @@ public record SqlJobDto(
     String jobId,
     String name,
     String description,
+    String schemaId,
     String connectionId,
     String connectionName,
     List<String> scripts,

@@ -99,7 +99,7 @@ public class SqlJobService {
   public SqlJobDto create(SqlJobRequest request) {
     validate(request);
     String jobId = UUID.randomUUID().toString();
-    SqlJobData data = toData(jobId, request);
+    SqlJobData data = toData(jobId, request, request.schemaId());
     boolean created;
     if (data.isRecurring()) {
       created = client.scheduleIfNotExists(recurringTask.schedulableInstance(jobId, data));
@@ -120,7 +120,12 @@ public class SqlJobService {
         find(jobId)
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: " + jobId));
-    SqlJobData data = toData(jobId, request);
+    // a request that omits schemaId keeps the job's current assignment (no silent unassignment)
+    String schemaId =
+        request.schemaId() == null || request.schemaId().isBlank()
+            ? existing.execution().getData().getSchemaId()
+            : request.schemaId().trim();
+    SqlJobData data = toData(jobId, request, schemaId);
     if (existing.recurring() && data.isRecurring()) {
       clientOp(() -> client.reschedule(recurringTask.schedulableInstance(jobId, data)));
     } else if (!existing.recurring() && !data.isRecurring()) {
@@ -203,7 +208,7 @@ public class SqlJobService {
     }
   }
 
-  private static SqlJobData toData(String jobId, SqlJobRequest request) {
+  private static SqlJobData toData(String jobId, SqlJobRequest request, String schemaId) {
     return new SqlJobData(
         jobId,
         request.name(),
@@ -215,7 +220,8 @@ public class SqlJobService {
         request.timeoutSeconds() != null ? request.timeoutSeconds() : 0,
         request.isRecurring() ? request.cronExpression().trim() : null,
         // jobs always run in the server's time zone; the data field is vestigial
-        null);
+        null,
+        schemaId);
   }
 
   private List<ScheduledExecution<SqlJobData>> scheduled(SqlScriptKind kind) {
@@ -271,6 +277,7 @@ public class SqlJobService {
         data.getJobId(),
         data.getName(),
         data.getDescription(),
+        data.getSchemaId(),
         data.getConnectionId(),
         connectionNames.get(data.getConnectionId()),
         data.getScripts(),
