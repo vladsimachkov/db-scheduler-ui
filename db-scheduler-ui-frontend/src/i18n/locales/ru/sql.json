@@ -22,6 +22,7 @@
   "scriptNumber": "Скрипт {{number}}",
   "addScript": "Добавить скрипт",
   "removeScript": "Удалить скрипт",
+  "dragToReorder": "Перетащите, чтобы изменить порядок",
   "scriptRequired": "Введите SQL-скрипт",
   "timeout": "Таймаут на оператор, секунд",
   "runAt": "Выполнить в",

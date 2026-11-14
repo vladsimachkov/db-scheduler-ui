@@ -37,7 +37,24 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { AddIcon, SmallCloseIcon } from '@chakra-ui/icons';
+import { AddIcon, DragHandleIcon, SmallCloseIcon } from '@chakra-ui/icons';
+import {
+  closestCenter,
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -76,6 +93,65 @@ function defaultValuesFor(initial?: SqlJob): SqlJobFormValues {
   };
 }
 
+interface SortableScriptProps {
+  id: string;
+  dragLabel: string;
+  header: React.ReactNode;
+  trailing?: React.ReactNode;
+  children: React.ReactNode;
+}
+
+/**
+ * One script row, reorderable by dragging its grip handle. The drag listeners sit
+ * only on the handle — attaching them to the row would swallow CodeMirror's own
+ * mouse events (text selection, cursor placement).
+ */
+const SortableScript: React.FC<SortableScriptProps> = ({
+  id,
+  dragLabel,
+  header,
+  trailing,
+  children,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+  return (
+    <Box
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Translate.toString(transform),
+        transition,
+        opacity: isDragging ? 0.7 : undefined,
+        position: 'relative',
+        zIndex: isDragging ? 1 : undefined,
+      }}
+    >
+      <HStack justifyContent={'space-between'} mb={1}>
+        <HStack spacing={1}>
+          <IconButton
+            aria-label={dragLabel}
+            icon={<DragHandleIcon boxSize={4} />}
+            size={'sm'}
+            variant={'ghost'}
+            cursor={'grab'}
+            {...attributes}
+            {...listeners}
+          />
+          {header}
+        </HStack>
+        {trailing}
+      </HStack>
+      {children}
+    </Box>
+  );
+};
+
 interface SqlJobFormProps {
   isOpen: boolean;
   onClose: () => void;
@@ -105,7 +181,25 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
     resolver: zodResolver(sqlJobFormSchema),
     defaultValues: defaultValuesFor(initial),
   });
-  const { fields, append, remove } = useFieldArray({ control, name: 'scripts' });
+  const { fields, append, remove, move } = useFieldArray({
+    control,
+    name: 'scripts',
+  });
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      return;
+    }
+    const from = fields.findIndex((item) => item.id === active.id);
+    const to = fields.findIndex((item) => item.id === over.id);
+    if (from >= 0 && to >= 0) {
+      move(from, to);
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -277,48 +371,66 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
 
               <Box>
                 <FormLabel>{t('script')}</FormLabel>
-                <VStack spacing={3} align={'stretch'}>
-                  {fields.map((item, index) => (
-                    <Box key={item.id}>
-                      <HStack justifyContent={'space-between'} mb={1}>
-                        <Text fontSize={'sm'} fontWeight={'semibold'}>
-                          {t('scriptNumber', { number: index + 1 })}
-                        </Text>
-                        {fields.length > 1 && (
-                          <Tooltip label={t('removeScript')}>
-                            <IconButton
-                              aria-label={t('removeScript')}
-                              icon={<SmallCloseIcon boxSize={4} />}
-                              size={'sm'}
-                              variant={'ghost'}
-                              onClick={() => remove(index)}
-                            />
-                          </Tooltip>
-                        )}
-                      </HStack>
-                      <Controller
-                        control={control}
-                        name={`scripts.${index}.script`}
-                        render={({ field }) => (
-                          <ScriptEditor
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder={'SELECT 1;'}
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  modifiers={[restrictToVerticalAxis]}
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext
+                    items={fields.map((item) => item.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <VStack spacing={3} align={'stretch'}>
+                      {fields.map((item, index) => (
+                        <SortableScript
+                          key={item.id}
+                          id={item.id}
+                          dragLabel={t('dragToReorder')}
+                          header={
+                            <Text fontSize={'sm'} fontWeight={'semibold'}>
+                              {t('scriptNumber', { number: index + 1 })}
+                            </Text>
+                          }
+                          trailing={
+                            fields.length > 1 ? (
+                              <Tooltip label={t('removeScript')}>
+                                <IconButton
+                                  aria-label={t('removeScript')}
+                                  icon={<SmallCloseIcon boxSize={4} />}
+                                  size={'sm'}
+                                  variant={'ghost'}
+                                  onClick={() => remove(index)}
+                                />
+                              </Tooltip>
+                            ) : undefined
+                          }
+                        >
+                          <Controller
+                            control={control}
+                            name={`scripts.${index}.script`}
+                            render={({ field }) => (
+                              <ScriptEditor
+                                value={field.value}
+                                onChange={field.onChange}
+                                placeholder={'SELECT 1;'}
+                              />
+                            )}
                           />
-                        )}
-                      />
-                      {errors.scripts?.[index]?.script && (
-                        <FormErrorMessage>
-                          {formErrorText(
-                            t,
-                            errors.scripts[index]?.script?.message,
-                            'scriptRequired',
+                          {errors.scripts?.[index]?.script && (
+                            <FormErrorMessage>
+                              {formErrorText(
+                                t,
+                                errors.scripts[index]?.script?.message,
+                                'scriptRequired',
+                              )}
+                            </FormErrorMessage>
                           )}
-                        </FormErrorMessage>
-                      )}
-                    </Box>
-                  ))}
-                </VStack>
+                        </SortableScript>
+                      ))}
+                    </VStack>
+                  </SortableContext>
+                </DndContext>
                 <Button
                   mt={2}
                   size={'sm'}

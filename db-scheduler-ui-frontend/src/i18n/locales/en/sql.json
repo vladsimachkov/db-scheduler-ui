@@ -22,6 +22,7 @@
   "scriptNumber": "Script {{number}}",
   "addScript": "Add script",
   "removeScript": "Remove script",
+  "dragToReorder": "Drag to reorder",
   "scriptRequired": "Enter a SQL script",
   "timeout": "Per-statement timeout, seconds",
   "runAt": "Run at",
