@@ -449,13 +449,16 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                           preview={firstLine(item.script)}
                           error={
                             errors.scripts?.[index]?.script ? (
-                              <FormErrorMessage>
-                                {formErrorText(
-                                  t,
-                                  errors.scripts[index]?.script?.message,
-                                  'scriptRequired',
-                                )}
-                              </FormErrorMessage>
+                              // FormErrorMessage renders nothing outside a FormControl
+                              <FormControl isInvalid>
+                                <FormErrorMessage>
+                                  {formErrorText(
+                                    t,
+                                    errors.scripts[index]?.script?.message,
+                                    'scriptRequired',
+                                  )}
+                                </FormErrorMessage>
+                              </FormControl>
                             ) : undefined
                           }
                           header={
