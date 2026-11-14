@@ -27,6 +27,7 @@ import { LogoIcon } from 'src/assets/icons/Logo';
 import { ColorModeToggle } from 'src/components/common/ColorModeToggle';
 import { useAuth } from 'src/hooks/useAuth';
 import {
+  getReadonly,
   getShowHistory,
   getShowOverview,
   getShowSql,
@@ -41,17 +42,27 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const { t: tAuth } = useTranslation('auth');
-  const { usersEnabled, username, logout } = useAuth();
+  const { t: tAdmin } = useTranslation('admin');
+  const { usersEnabled, username, admin, logout } = useAuth();
   const showHistory = getShowHistory();
   const showOverview = getShowOverview();
   const showSql = getShowSql();
+  // the admin endpoints do not exist in a read-only deployment — no point offering the tabs
+  const readOnly = getReadonly();
   const showNavigation = showOverview || showHistory || showSql;
   const isHistory = location.pathname.startsWith('/history');
   const isOverview = showOverview && location.pathname === '/overview';
   const isSql = showSql && location.pathname.startsWith('/sql-jobs');
   const isConnections = showSql && location.pathname === '/sql-connections';
+  const isAdminUsers = location.pathname.startsWith('/admin/users');
+  const isAdminSchemas = location.pathname.startsWith('/admin/schemas');
   const isScheduled =
-    !isHistory && !isOverview && !isSql && !isConnections;
+    !isHistory &&
+    !isOverview &&
+    !isSql &&
+    !isConnections &&
+    !isAdminUsers &&
+    !isAdminSchemas;
   const scheduledPath = showOverview ? '/scheduled' : '/';
 
   return (
@@ -191,6 +202,50 @@ export const TopBar: React.FC<TopBarProps> = ({ title }) => {
               >
                 {t('common:nav.connections')}
               </Button>
+            )}
+            {showSql && usersEnabled && admin && !readOnly && (
+              <>
+                <Button
+                  _hover={{
+                    bgColor: 'surface',
+                    borderColor: 'brand',
+                    color: 'textMuted',
+                  }}
+                  _active={{
+                    borderColor: 'surfaceSubtle',
+                    color: 'textFaint',
+                  }}
+                  bgColor={'surface'}
+                  color={'brand'}
+                  borderBottom="2px"
+                  borderRadius={'0'}
+                  borderColor={isAdminUsers ? 'brand' : 'border'}
+                  onClick={() => navigate('/admin/users')}
+                  aria-label={tAdmin('navUsers')}
+                >
+                  {tAdmin('navUsers')}
+                </Button>
+                <Button
+                  _hover={{
+                    bgColor: 'surface',
+                    borderColor: 'brand',
+                    color: 'textMuted',
+                  }}
+                  _active={{
+                    borderColor: 'surfaceSubtle',
+                    color: 'textFaint',
+                  }}
+                  bgColor={'surface'}
+                  color={'brand'}
+                  borderBottom="2px"
+                  borderRadius={'0'}
+                  borderColor={isAdminSchemas ? 'brand' : 'border'}
+                  onClick={() => navigate('/admin/schemas')}
+                  aria-label={tAdmin('navSchemas')}
+                >
+                  {tAdmin('navSchemas')}
+                </Button>
+              </>
             )}
           </>
         )}

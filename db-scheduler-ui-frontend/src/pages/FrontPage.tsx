@@ -16,6 +16,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { TopBar } from 'src/components/common/TopBar';
 import { LogList } from 'src/components/history/LogList';
 import { useAuth } from 'src/hooks/useAuth';
+import AdminSchemasPage from 'src/pages/AdminSchemasPage';
+import AdminUsersPage from 'src/pages/AdminUsersPage';
 import { LoginPage } from 'src/pages/LoginPage';
 import TaskList from 'src/components/scheduled/TaskList';
 import { OverviewPage } from 'src/pages/OverviewPage';
@@ -23,6 +25,7 @@ import SqlConnectionsPage from 'src/pages/SqlConnectionsPage';
 import SqlJobExecutionsPage from 'src/pages/SqlJobExecutionsPage';
 import SqlJobsPage from 'src/pages/SqlJobsPage';
 import {
+  getReadonly,
   getShowHistory,
   getShowOverview,
   getShowSql,
@@ -32,7 +35,7 @@ export const FrontPage: React.FC = () => {
   const showHistory = getShowHistory();
   const showOverview = getShowOverview();
   const showSql = getShowSql();
-  const { usersEnabled, authenticated, loading } = useAuth();
+  const { usersEnabled, authenticated, loading, admin } = useAuth();
 
   // The API is guarded server-side; this only decides what the SPA paints. While the first
   // /auth/me is in flight nothing is rendered rather than flashing the task list.
@@ -74,6 +77,18 @@ export const FrontPage: React.FC = () => {
                 element={<SqlConnectionsPage />}
               ></Route>
             </>
+          )}
+          {usersEnabled && showSql && admin && !getReadonly() && (
+            <>
+              <Route path="/admin" element={<Navigate to="/admin/users" replace />}></Route>
+              <Route path="/admin/users" element={<AdminUsersPage />}></Route>
+              <Route path="/admin/schemas" element={<AdminSchemasPage />}></Route>
+            </>
+          )}
+          {usersEnabled && showSql && (!admin || getReadonly()) && (
+            // the API enforces admin-only anyway; this just keeps the SPA from painting
+            // an empty shell for a link someone pasted
+            <Route path="/admin/*" element={<Navigate to="/" replace />}></Route>
           )}
           <Route path="/:taskName" element={<TaskList />}></Route>
           <Route path="/:taskName/page/:page" element={<TaskList />}></Route>

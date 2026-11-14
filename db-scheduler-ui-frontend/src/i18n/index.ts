@@ -24,6 +24,7 @@ import ruHistory from './locales/ru/history.json';
 import ruSql from './locales/ru/sql.json';
 import ruConnections from './locales/ru/connections.json';
 import ruAuth from './locales/ru/auth.json';
+import ruAdmin from './locales/ru/admin.json';
 import enCommon from './locales/en/common.json';
 import enOverview from './locales/en/overview.json';
 import enScheduled from './locales/en/scheduled.json';
@@ -31,6 +32,7 @@ import enHistory from './locales/en/history.json';
 import enSql from './locales/en/sql.json';
 import enConnections from './locales/en/connections.json';
 import enAuth from './locales/en/auth.json';
+import enAdmin from './locales/en/admin.json';
 
 export const NAMESPACES = [
   'common',
@@ -40,6 +42,7 @@ export const NAMESPACES = [
   'sql',
   'connections',
   'auth',
+  'admin',
 ];
 
 i18n
@@ -55,6 +58,7 @@ i18n
         sql: ruSql,
         connections: ruConnections,
         auth: ruAuth,
+        admin: ruAdmin,
       },
       en: {
         common: enCommon,
@@ -64,6 +68,7 @@ i18n
         sql: enSql,
         connections: enConnections,
         auth: enAuth,
+        admin: enAdmin,
       },
     },
     fallbackLng: 'en',
