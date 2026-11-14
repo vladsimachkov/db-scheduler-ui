@@ -1,1 +1,2 @@
 no.bekk.dbscheduler.ui.sql.autoconfigure.DbSchedulerUiSqlAutoConfiguration
+no.bekk.dbscheduler.ui.users.autoconfigure.DbSchedulerUiUsersAutoConfiguration
