@@ -18,7 +18,6 @@ import com.github.kagkarlsson.scheduler.task.helper.ScheduleAndData;
 import com.github.kagkarlsson.scheduler.task.schedule.Schedule;
 import com.github.kagkarlsson.scheduler.task.schedule.Schedules;
 import java.io.Serializable;
-import java.time.ZoneId;
 
 /**
  * The full definition of a SQL job, carried inside the scheduler's {@code task_data} column.
@@ -40,6 +39,12 @@ public class SqlJobData implements ScheduleAndData, Serializable {
   private final String script;
   private final int timeoutSeconds;
   private final String cronExpression;
+
+  /**
+   * Vestigial: jobs always fire in the server's time zone. The field is kept only so that
+   * already-persisted {@code task_data} blobs deserialize cleanly (this class is Java-serialized
+   * with a fixed serialVersionUID) — it is never read and never set for new or edited jobs.
+   */
   private final String zoneId;
 
   public SqlJobData(
@@ -89,10 +94,6 @@ public class SqlJobData implements ScheduleAndData, Serializable {
     return cronExpression;
   }
 
-  public String getZoneId() {
-    return zoneId;
-  }
-
   public boolean isRecurring() {
     return cronExpression != null && !cronExpression.isBlank();
   }
@@ -101,8 +102,8 @@ public class SqlJobData implements ScheduleAndData, Serializable {
     if (!isRecurring()) {
       return null;
     }
-    ZoneId zone = zoneId != null && !zoneId.isBlank() ? ZoneId.of(zoneId) : ZoneId.systemDefault();
-    return Schedules.cron(cronExpression, zone);
+    // No zone argument: the scheduler falls back to the server's default time zone.
+    return Schedules.cron(cronExpression);
   }
 
   /**

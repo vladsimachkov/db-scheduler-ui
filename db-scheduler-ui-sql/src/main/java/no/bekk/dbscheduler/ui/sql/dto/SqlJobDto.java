@@ -25,7 +25,6 @@ public record SqlJobDto(
     String script,
     int timeoutSeconds,
     String cronExpression,
-    String zoneId,
     boolean recurring,
     Instant nextRunTime,
     Instant lastSuccess,

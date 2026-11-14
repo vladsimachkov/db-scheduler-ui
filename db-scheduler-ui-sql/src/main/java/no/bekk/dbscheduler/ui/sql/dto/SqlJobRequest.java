@@ -30,7 +30,6 @@ public record SqlJobRequest(
     @NotBlank @Size(max = 65536, message = "script must not exceed 64 KiB") String script,
     @Min(1) @Max(86400) Integer timeoutSeconds,
     @Size(max = 100) String cronExpression,
-    @Size(max = 64) String zoneId,
     Instant runAt) {
 
   public boolean isRecurring() {

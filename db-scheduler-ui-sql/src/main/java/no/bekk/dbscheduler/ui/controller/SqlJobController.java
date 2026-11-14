@@ -44,10 +44,8 @@ public class SqlJobController {
 
   @GetMapping("/preview-schedule")
   public List<Instant> previewSchedule(
-      @RequestParam String cron,
-      @RequestParam(required = false) String timezone,
-      @RequestParam(defaultValue = "3") int count) {
-    return jobs.previewSchedule(cron, timezone, Math.min(Math.max(1, count), 10));
+      @RequestParam String cron, @RequestParam(defaultValue = "3") int count) {
+    return jobs.previewSchedule(cron, Math.min(Math.max(1, count), 10));
   }
 
   @GetMapping("/{jobId}")

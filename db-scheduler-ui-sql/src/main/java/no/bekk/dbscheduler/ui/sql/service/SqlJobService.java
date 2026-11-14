@@ -24,7 +24,6 @@ import com.github.kagkarlsson.scheduler.task.helper.OneTimeTask;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTaskWithPersistentSchedule;
 import com.github.kagkarlsson.scheduler.task.schedule.CronSchedule;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -172,14 +171,13 @@ public class SqlJobService {
    * Next {@code count} execution times for a cron pattern, computed by the same parser the
    * scheduler uses.
    */
-  public List<Instant> previewSchedule(String cron, String zoneId, int count) {
+  public List<Instant> previewSchedule(String cron, int count) {
     CronSchedule schedule;
     try {
-      ZoneId zone = zoneId == null || zoneId.isBlank() ? ZoneId.systemDefault() : ZoneId.of(zoneId);
-      schedule = new CronSchedule(cron, zone);
+      schedule = new CronSchedule(cron);
     } catch (RuntimeException e) {
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Invalid cron expression or time zone: " + e.getMessage(), e);
+          HttpStatus.BAD_REQUEST, "Invalid cron expression: " + e.getMessage(), e);
     }
     List<Instant> next = new ArrayList<>();
     Instant time = schedule.getInitialExecutionTime(Instant.now());
@@ -193,14 +191,10 @@ public class SqlJobService {
   private void validate(SqlJobRequest request) {
     if (request.isRecurring()) {
       try {
-        ZoneId zone =
-            request.zoneId() == null || request.zoneId().isBlank()
-                ? ZoneId.systemDefault()
-                : ZoneId.of(request.zoneId());
-        new CronSchedule(request.cronExpression().trim(), zone);
+        new CronSchedule(request.cronExpression().trim());
       } catch (RuntimeException e) {
         throw new ResponseStatusException(
-            HttpStatus.BAD_REQUEST, "Invalid cron expression or time zone: " + e.getMessage(), e);
+            HttpStatus.BAD_REQUEST, "Invalid cron expression: " + e.getMessage(), e);
       }
     }
     if (connections.findById(request.connectionId()).isEmpty()) {
@@ -218,7 +212,8 @@ public class SqlJobService {
         request.script(),
         request.timeoutSeconds() != null ? request.timeoutSeconds() : 0,
         request.isRecurring() ? request.cronExpression().trim() : null,
-        request.zoneId());
+        // jobs always run in the server's time zone; the data field is vestigial
+        null);
   }
 
   private List<ScheduledExecution<SqlJobData>> scheduled(SqlScriptKind kind) {
@@ -279,7 +274,6 @@ public class SqlJobService {
         data.getScript(),
         data.getTimeoutSeconds(),
         data.getCronExpression(),
-        data.getZoneId(),
         recurring,
         execution.getExecutionTime(),
         execution.getLastSuccess(),
