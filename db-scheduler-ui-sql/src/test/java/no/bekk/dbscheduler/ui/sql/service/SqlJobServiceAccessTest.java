@@ -44,6 +44,7 @@ import no.bekk.dbscheduler.ui.sql.model.SqlJobData;
 import no.bekk.dbscheduler.ui.sql.repo.SqlConnectionRepository;
 import no.bekk.dbscheduler.ui.sql.repo.SqlJobExecutionRepository;
 import no.bekk.dbscheduler.ui.users.model.AuthPrincipal;
+import no.bekk.dbscheduler.ui.users.model.SqlSchema;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -56,6 +57,8 @@ class SqlJobServiceAccessTest {
 
   private final SqlConnectionRepository connections = mock(SqlConnectionRepository.class);
   private final SqlJobExecutionRepository executions = mock(SqlJobExecutionRepository.class);
+  private final no.bekk.dbscheduler.ui.users.repo.SchemaRepository schemas =
+      mock(no.bekk.dbscheduler.ui.users.repo.SchemaRepository.class);
   private final RecurringTaskWithPersistentSchedule<SqlJobData> recurringTask =
       Tasks.recurringWithPersistentSchedule(DbSchedulerUiSqlAutoConfiguration.SQL_SCRIPT_TASK)
           .execute((inst, ctx) -> {});
@@ -334,6 +337,44 @@ class SqlJobServiceAccessTest {
         .isThrownBy(() -> service(guard(true)).create(request("s1", "conn-2")))
         .matches(e -> e.getStatusCode() == HttpStatus.BAD_REQUEST)
         .withMessageContaining("belong");
+  }
+
+  @Test
+  void schemaNameComesOnlyFromVisibleSchemasAndHiddenConnectionNameDoesNotLeak() {
+    stubStore();
+    givenJob("job-1", "s1", "conn-hidden"); // legacy job: own schema granted, connection hidden
+    when(connections.findAll()).thenReturn(List.of(connection("conn-hidden", "s2")));
+    Instant now = Instant.now();
+    when(schemas.findAll())
+        .thenReturn(
+            List.of(
+                new SqlSchema("s1", "One", null, now, now),
+                new SqlSchema("s2", "Two", null, now, now)));
+
+    var jobs =
+        new SqlJobService(
+                client,
+                recurringTask,
+                onceTask,
+                connections,
+                executions,
+                guard(false, "s1"),
+                schemas)
+            .listJobs();
+
+    assertThat(jobs).hasSize(1);
+    assertThat(jobs.get(0).schemaName()).isEqualTo("One");
+    assertThat(jobs.get(0).connectionName()).isNull();
+  }
+
+  @Test
+  void anyJobInSchemaChecksBothTaskTypes() {
+    stubStore();
+    givenJob("job-1", "s1", "conn-1");
+
+    SqlJobService svc = service(guard(true));
+    assertThat(svc.anyJobInSchema("s1")).isTrue();
+    assertThat(svc.anyJobInSchema("s2")).isFalse();
   }
 
   @Test

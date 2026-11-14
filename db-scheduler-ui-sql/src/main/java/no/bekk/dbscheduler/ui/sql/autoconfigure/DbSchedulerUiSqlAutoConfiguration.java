@@ -34,6 +34,7 @@ import no.bekk.dbscheduler.ui.sql.repo.SqlJobExecutionRepository;
 import no.bekk.dbscheduler.ui.sql.service.SqlAccessGuard;
 import no.bekk.dbscheduler.ui.sql.service.SqlConnectionService;
 import no.bekk.dbscheduler.ui.sql.service.SqlJobService;
+import no.bekk.dbscheduler.ui.users.repo.SchemaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -129,12 +130,20 @@ public class DbSchedulerUiSqlAutoConfiguration {
       OneTimeTask<SqlJobData> sqlScriptOnceTask,
       SqlConnectionRepository connections,
       SqlJobExecutionRepository executions,
-      ObjectProvider<SqlAccessGuard> guard) {
-    // The guard bean only exists when the users feature is on; without it every job is visible.
-    // getIfAvailable (not getIfUnique) is deliberate: a second guard bean would fail startup
-    // loudly rather than silently disabling enforcement.
+      ObjectProvider<SqlAccessGuard> guard,
+      ObjectProvider<SchemaRepository> schemas) {
+    // The guard and schema-repository beans only exist when the users feature is on; without them
+    // every job is visible and carries no schema name. getIfAvailable (not getIfUnique) is
+    // deliberate: a second guard bean would fail startup loudly rather than silently disabling
+    // enforcement.
     return new SqlJobService(
-        client, sqlScriptTask, sqlScriptOnceTask, connections, executions, guard.getIfAvailable());
+        client,
+        sqlScriptTask,
+        sqlScriptOnceTask,
+        connections,
+        executions,
+        guard.getIfAvailable(),
+        schemas.getIfAvailable());
   }
 
   @Bean

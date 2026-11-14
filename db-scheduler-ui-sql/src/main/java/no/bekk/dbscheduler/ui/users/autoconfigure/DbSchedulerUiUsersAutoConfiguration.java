@@ -16,16 +16,22 @@ package no.bekk.dbscheduler.ui.users.autoconfigure;
 import com.github.kagkarlsson.scheduler.SchedulerClient;
 import no.bekk.dbscheduler.ui.sql.autoconfigure.DbSchedulerUiSqlAutoConfiguration;
 import no.bekk.dbscheduler.ui.sql.repo.SqlConnectionRepository;
+import no.bekk.dbscheduler.ui.sql.service.SqlJobService;
 import no.bekk.dbscheduler.ui.users.auth.AuthController;
 import no.bekk.dbscheduler.ui.users.auth.AuthSessionFilter;
 import no.bekk.dbscheduler.ui.users.auth.BootstrapAdminInitializer;
 import no.bekk.dbscheduler.ui.users.auth.SessionAccessGuard;
 import no.bekk.dbscheduler.ui.users.config.DbSchedulerUiUsersProperties;
+import no.bekk.dbscheduler.ui.users.controller.SchemaAdminController;
+import no.bekk.dbscheduler.ui.users.controller.SchemaController;
+import no.bekk.dbscheduler.ui.users.controller.UserAdminController;
 import no.bekk.dbscheduler.ui.users.crypto.PasswordHasher;
 import no.bekk.dbscheduler.ui.users.repo.GrantRepository;
 import no.bekk.dbscheduler.ui.users.repo.SchemaRepository;
 import no.bekk.dbscheduler.ui.users.repo.UserRepository;
 import no.bekk.dbscheduler.ui.users.service.AuthService;
+import no.bekk.dbscheduler.ui.users.service.SchemaService;
+import no.bekk.dbscheduler.ui.users.service.UserService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -90,11 +96,57 @@ public class DbSchedulerUiUsersAutoConfiguration {
   }
 
   @Bean
-  FilterRegistrationBean<AuthSessionFilter> dbSchedulerUiAuthFilter() {
+  FilterRegistrationBean<AuthSessionFilter> dbSchedulerUiAuthFilter(UserRepository users) {
+    // the filter revalidates the session against sql_users on every request
     FilterRegistrationBean<AuthSessionFilter> registration =
-        new FilterRegistrationBean<>(new AuthSessionFilter());
+        new FilterRegistrationBean<>(new AuthSessionFilter(users));
     registration.addUrlPatterns("/*");
     registration.setName("dbSchedulerUiAuthFilter");
     return registration;
+  }
+
+  @Bean
+  SchemaService schemaService(
+      SchemaRepository schemas,
+      GrantRepository grants,
+      UserRepository users,
+      SqlConnectionRepository connections,
+      SqlJobService jobs,
+      SessionAccessGuard guard) {
+    return new SchemaService(schemas, grants, users, connections, jobs, guard);
+  }
+
+  @Bean
+  UserService userService(
+      UserRepository users,
+      GrantRepository grants,
+      PasswordHasher hasher,
+      SessionAccessGuard guard) {
+    return new UserService(users, grants, hasher, guard);
+  }
+
+  @Bean
+  SchemaController schemaController(SchemaService schemas) {
+    return new SchemaController(schemas);
+  }
+
+  @Bean
+  @ConditionalOnProperty(
+      prefix = "db-scheduler-ui",
+      name = "read-only",
+      havingValue = "false",
+      matchIfMissing = true)
+  SchemaAdminController schemaAdminController(SchemaService schemas) {
+    return new SchemaAdminController(schemas);
+  }
+
+  @Bean
+  @ConditionalOnProperty(
+      prefix = "db-scheduler-ui",
+      name = "read-only",
+      havingValue = "false",
+      matchIfMissing = true)
+  UserAdminController userAdminController(UserService users) {
+    return new UserAdminController(users);
   }
 }

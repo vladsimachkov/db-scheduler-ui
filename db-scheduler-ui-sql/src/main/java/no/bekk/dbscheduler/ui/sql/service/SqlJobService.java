@@ -40,6 +40,8 @@ import no.bekk.dbscheduler.ui.sql.model.SqlJobData;
 import no.bekk.dbscheduler.ui.sql.model.SqlJobExecution;
 import no.bekk.dbscheduler.ui.sql.repo.SqlConnectionRepository;
 import no.bekk.dbscheduler.ui.sql.repo.SqlJobExecutionRepository;
+import no.bekk.dbscheduler.ui.users.model.SqlSchema;
+import no.bekk.dbscheduler.ui.users.repo.SchemaRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -65,13 +67,16 @@ public class SqlJobService {
   /** {@code null} when the users feature is off — then every job is visible, as before. */
   private final SqlAccessGuard guard;
 
+  /** {@code null} when the users feature is off — then jobs carry no schema name. */
+  private final SchemaRepository schemas;
+
   public SqlJobService(
       SchedulerClient client,
       RecurringTaskWithPersistentSchedule<SqlJobData> recurringTask,
       OneTimeTask<SqlJobData> onceTask,
       SqlConnectionRepository connections,
       SqlJobExecutionRepository executions) {
-    this(client, recurringTask, onceTask, connections, executions, null);
+    this(client, recurringTask, onceTask, connections, executions, null, null);
   }
 
   public SqlJobService(
@@ -81,12 +86,24 @@ public class SqlJobService {
       SqlConnectionRepository connections,
       SqlJobExecutionRepository executions,
       SqlAccessGuard guard) {
+    this(client, recurringTask, onceTask, connections, executions, guard, null);
+  }
+
+  public SqlJobService(
+      SchedulerClient client,
+      RecurringTaskWithPersistentSchedule<SqlJobData> recurringTask,
+      OneTimeTask<SqlJobData> onceTask,
+      SqlConnectionRepository connections,
+      SqlJobExecutionRepository executions,
+      SqlAccessGuard guard,
+      SchemaRepository schemas) {
     this.client = client;
     this.recurringTask = recurringTask;
     this.onceTask = onceTask;
     this.connections = connections;
     this.executions = executions;
     this.guard = guard;
+    this.schemas = schemas;
   }
 
   public List<SqlJobDto> listJobs() {
@@ -99,15 +116,16 @@ public class SqlJobService {
         connections.findAll().stream()
             .filter(c -> visible(visibleSchemas, c.schemaId()))
             .collect(Collectors.toMap(SqlJobConnection::id, SqlJobConnection::name, (a, b) -> a));
+    Map<String, String> schemaNames = schemaNames(visibleSchemas);
     List<SqlJobDto> jobs = new ArrayList<>();
     for (ScheduledExecution<SqlJobData> execution : scheduled(SqlScriptKind.RECURRING)) {
       if (visible(visibleSchemas, execution.getData().getSchemaId())) {
-        jobs.add(toDto(execution, true, connectionNames));
+        jobs.add(toDto(execution, true, connectionNames, schemaNames));
       }
     }
     for (ScheduledExecution<SqlJobData> execution : scheduled(SqlScriptKind.ONCE)) {
       if (visible(visibleSchemas, execution.getData().getSchemaId())) {
-        jobs.add(toDto(execution, false, connectionNames));
+        jobs.add(toDto(execution, false, connectionNames, schemaNames));
       }
     }
     jobs.sort(
@@ -123,7 +141,13 @@ public class SqlJobService {
   public SqlJobDto getJob(String jobId) {
     return find(jobId)
         .filter(this::visibleJob)
-        .map(found -> toDto(found.execution(), found.recurring(), connectionNames()))
+        .map(
+            found ->
+                toDto(
+                    found.execution(),
+                    found.recurring(),
+                    connectionNames(),
+                    schemaNames(guard == null ? null : guard.accessibleSchemaIds())))
         .orElseThrow(
             () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job not found: " + jobId));
   }
@@ -354,16 +378,43 @@ public class SqlJobService {
         .collect(Collectors.toMap(SqlJobConnection::id, SqlJobConnection::name, (a, b) -> a));
   }
 
+  /** Id-to-name of the schemas the caller can see; empty when the users feature is off. */
+  private Map<String, String> schemaNames(Set<String> visibleSchemas) {
+    if (schemas == null) {
+      return Map.of();
+    }
+    return schemas.findAll().stream()
+        .filter(s -> visible(visibleSchemas, s.id()))
+        .collect(Collectors.toMap(SqlSchema::id, SqlSchema::name, (a, b) -> a));
+  }
+
+  /**
+   * Whether any job (recurring or one-time) is assigned to the schema; used by schema delete. A
+   * {@code null} argument would match every legacy schema-less job, so it is rejected.
+   */
+  public boolean anyJobInSchema(String schemaId) {
+    if (schemaId == null) {
+      throw new IllegalArgumentException("schemaId must not be null");
+    }
+    return scheduled(SqlScriptKind.RECURRING).stream()
+            .anyMatch(e -> Objects.equals(schemaId, e.getData().getSchemaId()))
+        || scheduled(SqlScriptKind.ONCE).stream()
+            .anyMatch(e -> Objects.equals(schemaId, e.getData().getSchemaId()));
+  }
+
   private static SqlJobDto toDto(
       ScheduledExecution<SqlJobData> execution,
       boolean recurring,
-      Map<String, String> connectionNames) {
+      Map<String, String> connectionNames,
+      Map<String, String> schemaNames) {
     SqlJobData data = execution.getData();
     return new SqlJobDto(
         data.getJobId(),
         data.getName(),
         data.getDescription(),
         data.getSchemaId(),
+        // Map.of-backed maps reject null keys on lookup; legacy jobs carry a null schema
+        data.getSchemaId() == null ? null : schemaNames.get(data.getSchemaId()),
         data.getConnectionId(),
         connectionNames.get(data.getConnectionId()),
         data.getScripts(),

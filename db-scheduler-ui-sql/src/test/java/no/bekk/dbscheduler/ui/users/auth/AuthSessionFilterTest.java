@@ -14,11 +14,17 @@
 package no.bekk.dbscheduler.ui.users.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import jakarta.servlet.FilterChain;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import no.bekk.dbscheduler.ui.users.model.AuthPrincipal;
+import no.bekk.dbscheduler.ui.users.model.UserAccount;
+import no.bekk.dbscheduler.ui.users.repo.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -155,5 +161,47 @@ class AuthSessionFilterTest {
     filter.doFilter(request, response, new MockFilterChain());
 
     assertThat(response.getStatus()).isEqualTo(401);
+  }
+
+  // --- revalidation against the account store (constructor with UserRepository) ---
+
+  private static UserAccount account(boolean admin, boolean enabled) {
+    Instant now = Instant.now();
+    return new UserAccount("u1", "alice", "hash", admin, enabled, now, now);
+  }
+
+  @Test
+  void deletedOrDisabledUserSessionIsRejected() throws Exception {
+    UserRepository users = mock(UserRepository.class);
+    AuthSessionFilter revalidating = new AuthSessionFilter(users);
+
+    when(users.findById("u1")).thenReturn(Optional.empty());
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    revalidating.doFilter(
+        authenticated("GET", "/db-scheduler-api/sql-jobs"), response, new MockFilterChain());
+    assertThat(response.getStatus()).isEqualTo(401);
+
+    when(users.findById("u1")).thenReturn(Optional.of(account(false, false)));
+    MockHttpServletResponse disabledResponse = new MockHttpServletResponse();
+    revalidating.doFilter(
+        authenticated("GET", "/db-scheduler-api/sql-jobs"),
+        disabledResponse,
+        new MockFilterChain());
+    assertThat(disabledResponse.getStatus()).isEqualTo(401);
+  }
+
+  @Test
+  void revalidationRefreshesTheAdminFlagFromTheDatabase() throws Exception {
+    UserRepository users = mock(UserRepository.class);
+    // session still claims admin; the account was demoted in the meantime
+    when(users.findById("u1")).thenReturn(Optional.of(account(false, true)));
+    AuthSessionFilter revalidating = new AuthSessionFilter(users);
+
+    AtomicReference<AuthPrincipal> seen = new AtomicReference<>();
+    FilterChain capture = (rq, rs) -> seen.set(AuthContext.get());
+    revalidating.doFilter(
+        authenticated("GET", "/db-scheduler-api/sql-jobs"), new MockHttpServletResponse(), capture);
+
+    assertThat(seen.get()).isNotNull().isEqualTo(new AuthPrincipal("u1", "alice", false));
   }
 }

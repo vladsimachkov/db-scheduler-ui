@@ -21,6 +21,8 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Set;
 import no.bekk.dbscheduler.ui.users.model.AuthPrincipal;
+import no.bekk.dbscheduler.ui.users.model.UserAccount;
+import no.bekk.dbscheduler.ui.users.repo.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -42,6 +44,17 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class AuthSessionFilter extends OncePerRequestFilter {
 
   public static final String CSRF_HEADER = "X-Requested-With";
+
+  private final UserRepository users;
+
+  /** No revalidation — kept for tests and hosts that wire the filter without the account store. */
+  public AuthSessionFilter() {
+    this(null);
+  }
+
+  public AuthSessionFilter(UserRepository users) {
+    this.users = users;
+  }
 
   private static final String API_MARKER = "/db-scheduler-api";
   private static final Set<String> PUBLIC_API_PATHS =
@@ -115,13 +128,25 @@ public class AuthSessionFilter extends OncePerRequestFilter {
     };
   }
 
-  private static AuthPrincipal currentPrincipal(HttpServletRequest request) {
+  private AuthPrincipal currentPrincipal(HttpServletRequest request) {
     HttpSession session = request.getSession(false);
     if (session == null) {
       return null;
     }
     Object value = session.getAttribute(AuthPrincipal.SESSION_KEY);
-    return value instanceof AuthPrincipal principal ? principal : null;
+    if (!(value instanceof AuthPrincipal principal)) {
+      return null;
+    }
+    if (users == null) {
+      return principal;
+    }
+    // Re-read the account on every request so demote, disable and delete take effect on the next
+    // call rather than at session expiry; the admin flag the session carries is only a snapshot.
+    return users
+        .findById(principal.userId())
+        .filter(UserAccount::enabled)
+        .map(u -> new AuthPrincipal(u.id(), u.username(), u.admin()))
+        .orElse(null);
   }
 
   private static void writeProblem(
