@@ -59,8 +59,26 @@ const DIALECTS: SqlDialect[] = [
   'TRINO',
   'IMPALA',
   'MYSQL',
+  'MARIADB',
+  'POSTGRESQL',
+  'MSSQL',
+  'CLICKHOUSE',
   'GENERIC',
 ];
+
+// Driver class is optional (Hikari auto-discovers from the classpath); the placeholder
+// just shows the canonical class for the selected dialect. GENERIC has no single driver.
+const DIALECT_DRIVER_HINT: Record<SqlDialect, string> = {
+  ORACLE: 'oracle.jdbc.OracleDriver',
+  TRINO: 'io.trino.jdbc.TrinoDriver',
+  IMPALA: 'com.cloudera.impala.jdbc41.Driver',
+  MYSQL: 'com.mysql.cj.jdbc.Driver',
+  MARIADB: 'org.mariadb.jdbc.Driver',
+  POSTGRESQL: 'org.postgresql.Driver',
+  MSSQL: 'com.microsoft.sqlserver.jdbc.SQLServerDriver',
+  CLICKHOUSE: 'com.clickhouse.jdbc.ClickHouseDriver',
+  GENERIC: '',
+};
 
 function defaultValuesFor(initial?: SqlConnection): ConnectionFormValues {
   return {
@@ -234,7 +252,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 <Input
                   {...register('driverClass')}
                   fontFamily={'monospace'}
-                  placeholder={'oracle.jdbc.OracleDriver'}
+                  placeholder={DIALECT_DRIVER_HINT[values.dialect] || undefined}
                 />
               </FormControl>
 

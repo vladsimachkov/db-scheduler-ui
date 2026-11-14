@@ -12,7 +12,16 @@
  * limitations under the License.
  */
 
-export type SqlDialect = 'ORACLE' | 'TRINO' | 'IMPALA' | 'MYSQL' | 'GENERIC';
+export type SqlDialect =
+  | 'ORACLE'
+  | 'TRINO'
+  | 'IMPALA'
+  | 'MYSQL'
+  | 'MARIADB'
+  | 'POSTGRESQL'
+  | 'MSSQL'
+  | 'CLICKHOUSE'
+  | 'GENERIC';
 
 export interface SqlConnection {
   id: string;

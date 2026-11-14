@@ -13,6 +13,8 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import i18n from 'src/i18n';
+import enConnections from 'src/i18n/locales/en/connections.json';
+import ruConnections from 'src/i18n/locales/ru/connections.json';
 
 describe('i18n', () => {
   beforeEach(async () => {
@@ -60,5 +62,12 @@ describe('i18n', () => {
   it('falls back to English for unsupported languages', async () => {
     await i18n.changeLanguage('de');
     expect(i18n.t('overview:title')).toBe('All tasks');
+  });
+
+  it('keeps dialect names in sync across locales', () => {
+    // a dialect added to one locale but not the other renders a raw key in the UI
+    expect(Object.keys(ruConnections.dialectNames).sort()).toEqual(
+      Object.keys(enConnections.dialectNames).sort(),
+    );
   });
 });

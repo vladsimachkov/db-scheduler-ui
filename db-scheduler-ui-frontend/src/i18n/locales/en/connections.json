@@ -13,6 +13,10 @@
     "TRINO": "Trino",
     "IMPALA": "Impala",
     "MYSQL": "MySQL",
+    "MARIADB": "MariaDB",
+    "POSTGRESQL": "PostgreSQL",
+    "MSSQL": "MS SQL Server",
+    "CLICKHOUSE": "ClickHouse",
     "GENERIC": "Other (generic JDBC)"
   },
   "jdbcUrl": "JDBC URL",

@@ -16,7 +16,17 @@ import { z } from 'zod';
 export const connectionFormSchema = z
   .object({
     name: z.string().trim().min(1, 'required').max(100, 'tooLong'),
-    dialect: z.enum(['ORACLE', 'TRINO', 'IMPALA', 'MYSQL', 'GENERIC']),
+    dialect: z.enum([
+      'ORACLE',
+      'TRINO',
+      'IMPALA',
+      'MYSQL',
+      'MARIADB',
+      'POSTGRESQL',
+      'MSSQL',
+      'CLICKHOUSE',
+      'GENERIC',
+    ]),
     jdbcUrl: z.string(),
     driverClass: z.string().max(300, 'tooLong'),
     username: z.string().max(300, 'tooLong'),
