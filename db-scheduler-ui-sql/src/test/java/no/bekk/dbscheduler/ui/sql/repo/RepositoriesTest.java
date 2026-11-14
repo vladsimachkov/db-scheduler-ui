@@ -50,6 +50,7 @@ class RepositoriesTest {
         new SqlJobConnection(
             "c1",
             "Warehouse",
+            "s1",
             SqlDialect.TRINO,
             "jdbc:trino://host:443/analytics",
             "io.trino.jdbc.TrinoDriver",
@@ -61,6 +62,7 @@ class RepositoriesTest {
 
     SqlJobConnection loaded = connections.findById("c1").orElseThrow();
     assertThat(loaded.name()).isEqualTo("Warehouse");
+    assertThat(loaded.schemaId()).isEqualTo("s1");
     assertThat(loaded.dialect()).isEqualTo(SqlDialect.TRINO);
     assertThat(loaded.password()).isEqualTo("enc:v1:xyz");
     assertThat(loaded.propertiesJson()).isEqualTo("{\"key\":\"value\"}");
@@ -70,6 +72,7 @@ class RepositoriesTest {
         new SqlJobConnection(
             "c1",
             "Renamed",
+            null,
             SqlDialect.ORACLE,
             "jdbc:oracle:thin:@h:1521:s",
             null,
@@ -79,6 +82,7 @@ class RepositoriesTest {
             now,
             Instant.now()));
     assertThat(connections.findById("c1").orElseThrow().name()).isEqualTo("Renamed");
+    assertThat(connections.findById("c1").orElseThrow().schemaId()).isNull();
     assertThat(connections.findById("c1").orElseThrow().driverClass()).isNull();
 
     assertThat(connections.findAll()).hasSize(1);
@@ -95,7 +99,7 @@ class RepositoriesTest {
       String id = "c-" + dialect.name();
       connections.insert(
           new SqlJobConnection(
-              id, "n", dialect, "jdbc:example://h/db", null, null, null, null, now, now));
+              id, "n", null, dialect, "jdbc:example://h/db", null, null, null, null, now, now));
       assertThat(connections.findById(id).orElseThrow().dialect()).isEqualTo(dialect);
     }
   }

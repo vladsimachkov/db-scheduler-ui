@@ -59,6 +59,7 @@ class SqlJobExecutorTest {
         new SqlJobConnection(
             "conn-1",
             "Target H2",
+            null,
             SqlDialect.GENERIC,
             "jdbc:h2:mem:" + targetName + ";DB_CLOSE_DELAY=-1",
             null,

@@ -30,6 +30,7 @@ class ConnectionPoolManagerTest {
     return new SqlJobConnection(
         id,
         "test",
+        null,
         SqlDialect.GENERIC,
         "jdbc:h2:mem:pool_" + id + ";DB_CLOSE_DELAY=-1",
         null,
@@ -65,6 +66,7 @@ class ConnectionPoolManagerTest {
         new SqlJobConnection(
             "bad",
             "bad",
+            null,
             SqlDialect.IMPALA,
             "jdbc:impala://host:10000",
             "com.cloudera.impala.jdbc41.Driver",
@@ -84,6 +86,7 @@ class ConnectionPoolManagerTest {
         new SqlJobConnection(
             "badjson",
             "bad",
+            null,
             SqlDialect.GENERIC,
             "jdbc:h2:mem:badjson",
             null,

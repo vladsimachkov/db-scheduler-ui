@@ -27,7 +27,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public class SqlConnectionRepository {
 
   private static final String COLUMNS =
-      "id, name, dialect, jdbc_url, driver_class, username, password, properties_json, created_time, updated_time";
+      "id, name, schema_id, dialect, jdbc_url, driver_class, username, password, properties_json, created_time, updated_time";
 
   private final JdbcTemplate jdbc;
 
@@ -37,9 +37,10 @@ public class SqlConnectionRepository {
 
   public void insert(SqlJobConnection connection) {
     jdbc.update(
-        "insert into sql_job_connections (" + COLUMNS + ") values (?,?,?,?,?,?,?,?,?,?)",
+        "insert into sql_job_connections (" + COLUMNS + ") values (?,?,?,?,?,?,?,?,?,?,?)",
         connection.id(),
         connection.name(),
+        connection.schemaId(),
         connection.dialect().name(),
         connection.jdbcUrl(),
         connection.driverClass(),
@@ -52,9 +53,10 @@ public class SqlConnectionRepository {
 
   public int update(SqlJobConnection connection) {
     return jdbc.update(
-        "update sql_job_connections set name=?, dialect=?, jdbc_url=?, driver_class=?, username=?,"
+        "update sql_job_connections set name=?, schema_id=?, dialect=?, jdbc_url=?, driver_class=?, username=?,"
             + " password=?, properties_json=?, updated_time=? where id=?",
         connection.name(),
+        connection.schemaId(),
         connection.dialect().name(),
         connection.jdbcUrl(),
         connection.driverClass(),
@@ -67,6 +69,14 @@ public class SqlConnectionRepository {
 
   public int deleteById(String id) {
     return jdbc.update("delete from sql_job_connections where id = ?", id);
+  }
+
+  /** How many connections belong to a schema — blocks schema deletion while non-zero. */
+  public long countBySchemaId(String schemaId) {
+    Long count =
+        jdbc.queryForObject(
+            "select count(*) from sql_job_connections where schema_id = ?", Long.class, schemaId);
+    return count == null ? 0 : count;
   }
 
   public Optional<SqlJobConnection> findById(String id) {
@@ -84,6 +94,7 @@ public class SqlConnectionRepository {
     return new SqlJobConnection(
         rs.getString("id"),
         rs.getString("name"),
+        rs.getString("schema_id"),
         parseDialect(rs.getString("dialect"), rs.getString("id")),
         rs.getString("jdbc_url"),
         rs.getString("driver_class"),

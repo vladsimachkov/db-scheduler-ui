@@ -22,6 +22,8 @@ import java.time.Instant;
 public record SqlJobConnection(
     String id,
     String name,
+    /** Owning schema id; {@code null} on rows created before the users feature (admin-only). */
+    String schemaId,
     SqlDialect dialect,
     String jdbcUrl,
     String driverClass,

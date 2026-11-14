@@ -74,6 +74,7 @@ public class SqlConnectionService {
         new SqlJobConnection(
             UUID.randomUUID().toString(),
             request.name(),
+            blankToNull(request.schemaId()),
             request.dialect(),
             request.jdbcUrl(),
             blankToNull(request.driverClass()),
@@ -101,6 +102,10 @@ public class SqlConnectionService {
         new SqlJobConnection(
             existing.id(),
             request.name(),
+            // a request that omits schemaId keeps the current assignment (no silent unassignment)
+            request.schemaId() == null || request.schemaId().isBlank()
+                ? existing.schemaId()
+                : request.schemaId().trim(),
             request.dialect(),
             request.jdbcUrl(),
             blankToNull(request.driverClass()),
@@ -181,6 +186,7 @@ public class SqlConnectionService {
     return new SqlConnectionDto(
         connection.id(),
         connection.name(),
+        connection.schemaId(),
         connection.dialect(),
         connection.jdbcUrl(),
         connection.driverClass(),

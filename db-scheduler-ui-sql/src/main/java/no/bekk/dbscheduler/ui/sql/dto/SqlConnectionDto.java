@@ -23,6 +23,7 @@ import no.bekk.dbscheduler.ui.sql.model.SqlDialect;
 public record SqlConnectionDto(
     String id,
     String name,
+    String schemaId,
     SqlDialect dialect,
     String jdbcUrl,
     String driverClass,

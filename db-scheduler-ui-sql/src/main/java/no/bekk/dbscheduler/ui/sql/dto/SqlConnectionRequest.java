@@ -19,10 +19,12 @@ import jakarta.validation.constraints.Size;
 import no.bekk.dbscheduler.ui.sql.model.SqlDialect;
 
 /**
- * Create/update payload for a connection. On update, a blank {@code password} keeps the stored one.
+ * Create/update payload for a connection. On update, a blank {@code password} keeps the stored one
+ * and a {@code null} {@code schemaId} keeps the current schema assignment.
  */
 public record SqlConnectionRequest(
     @NotBlank @Size(max = 100) String name,
+    @Size(max = 50) String schemaId,
     @NotNull SqlDialect dialect,
     @NotBlank @Size(max = 2000) String jdbcUrl,
     @Size(max = 300) String driverClass,
