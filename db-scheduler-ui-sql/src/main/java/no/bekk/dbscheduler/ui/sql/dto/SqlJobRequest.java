@@ -16,18 +16,23 @@ package no.bekk.dbscheduler.ui.sql.dto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.List;
 
 /**
  * Create/update payload for a SQL job. Recurring when {@code cronExpression} is set, one-time
- * otherwise (then {@code runAt} optionally picks the execution time, defaulting to now).
+ * otherwise (then {@code runAt} optionally picks the execution time, defaulting to now). The
+ * scripts run in the given order, stopping at the first failing statement.
  */
 public record SqlJobRequest(
     @NotBlank @Size(max = 100) String name,
     @Size(max = 1000) String description,
     @NotBlank String connectionId,
-    @NotBlank @Size(max = 65536, message = "script must not exceed 64 KiB") String script,
+    @NotEmpty @Size(max = 20, message = "at most 20 scripts")
+        List<@NotBlank @Size(max = 65536, message = "script must not exceed 64 KiB") String>
+            scripts,
     @Min(1) @Max(86400) Integer timeoutSeconds,
     @Size(max = 100) String cronExpression,
     Instant runAt) {

@@ -146,7 +146,7 @@ class SqlJobsSecuritySmokeTest {
             json(
                 "{\"name\":\"sec-job\",\"connectionId\":\""
                     + connectionId
-                    + "\",\"script\":\"SELECT 1;\",\"cronExpression\":\"0 0 5 * * ?\"}"),
+                    + "\",\"scripts\":[\"SELECT 1;\"],\"cronExpression\":\"0 0 5 * * ?\"}"),
             String.class);
     assertThat(job.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     String jobId =

@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -105,8 +106,9 @@ class SqlJobsSmokeTest {
                 "smoke-job",
                 "connectionId",
                 connectionId,
-                "script",
-                "CREATE TABLE IF NOT EXISTS smoke_output(x INT); INSERT INTO smoke_output VALUES (42)",
+                "scripts",
+                List.of(
+                    "CREATE TABLE IF NOT EXISTS smoke_output(x INT); INSERT INTO smoke_output VALUES (42)"),
                 "cronExpression",
                 "0 0/5 * * * *",
                 "timeoutSeconds",
@@ -212,8 +214,8 @@ class SqlJobsSmokeTest {
                 "guard-job",
                 "connectionId",
                 connectionId,
-                "script",
-                "SELECT 1",
+                "scripts",
+                List.of("SELECT 1"),
                 "cronExpression",
                 "0 0/5 * * * *"));
     String jobId =
@@ -264,9 +266,10 @@ class SqlJobsSmokeTest {
                 "slow-job",
                 "connectionId",
                 connectionId,
-                "script",
-                "WITH recursive r(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM r WHERE n <"
-                    + " 100000000) SELECT count(*) FROM r",
+                "scripts",
+                List.of(
+                    "WITH recursive r(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM r WHERE n <"
+                        + " 100000000) SELECT count(*) FROM r"),
                 "cronExpression",
                 "0 0/5 * * * *",
                 "timeoutSeconds",

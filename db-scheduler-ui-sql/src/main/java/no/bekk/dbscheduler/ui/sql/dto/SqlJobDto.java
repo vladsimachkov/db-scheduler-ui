@@ -14,6 +14,7 @@
 package no.bekk.dbscheduler.ui.sql.dto;
 
 import java.time.Instant;
+import java.util.List;
 
 /** A SQL job as seen by the UI: definition plus live scheduler state. */
 public record SqlJobDto(
@@ -22,7 +23,7 @@ public record SqlJobDto(
     String description,
     String connectionId,
     String connectionName,
-    String script,
+    List<String> scripts,
     int timeoutSeconds,
     String cronExpression,
     boolean recurring,

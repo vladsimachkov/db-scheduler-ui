@@ -209,8 +209,9 @@ public class SqlJobService {
         request.name(),
         request.description(),
         request.connectionId(),
-        request.script(),
+        // the single-script field stays empty for new data: the ordered list is the source now
         null,
+        request.scripts(),
         request.timeoutSeconds() != null ? request.timeoutSeconds() : 0,
         request.isRecurring() ? request.cronExpression().trim() : null,
         // jobs always run in the server's time zone; the data field is vestigial
@@ -272,7 +273,7 @@ public class SqlJobService {
         data.getDescription(),
         data.getConnectionId(),
         connectionNames.get(data.getConnectionId()),
-        data.getScript(),
+        data.getScripts(),
         data.getTimeoutSeconds(),
         data.getCronExpression(),
         recurring,
