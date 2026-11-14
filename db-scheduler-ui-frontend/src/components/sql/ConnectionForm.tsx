@@ -237,7 +237,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 </FormControl>
               </HStack>
 
-              <FormControl>
+              <FormControl isInvalid={!!errors.jdbcUrl}>
                 <FormLabel>{t('jdbcUrl')}</FormLabel>
                 <Input {...register('jdbcUrl')} fontFamily={'monospace'} />
                 {errors.jdbcUrl && (
@@ -271,7 +271,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 )}
               </HStack>
 
-              <FormControl>
+              <FormControl isInvalid={!!errors.propertiesJson}>
                 <FormLabel>{t('properties')}</FormLabel>
                 <Input
                   {...register('propertiesJson')}
