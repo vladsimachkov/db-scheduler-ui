@@ -45,18 +45,50 @@ public class TaskLogic {
   private final Scheduler scheduler;
   private final Caching caching;
   private final boolean showData;
+  private final ExecutionVisibilityFilter visibility;
 
   public TaskLogic(Scheduler scheduler, Caching caching, boolean showData) {
+    this(scheduler, caching, showData, null);
+  }
+
+  public TaskLogic(
+      Scheduler scheduler,
+      Caching caching,
+      boolean showData,
+      ExecutionVisibilityFilter visibility) {
     this.scheduler = scheduler;
     this.caching = caching;
     this.showData = showData;
+    this.visibility = visibility;
+  }
+
+  private boolean visible(String taskName, String taskInstance, Object taskData, String schemaId) {
+    return visibility == null || visibility.visible(taskName, taskInstance, taskData, schemaId);
+  }
+
+  /** Filters a list of ungrouped task models (one execution each) before grouping. */
+  private List<TaskModel> filterVisible(List<TaskModel> ungroupedTasks, String schemaId) {
+    if (visibility == null) {
+      return ungroupedTasks;
+    }
+    return ungroupedTasks.stream()
+        .filter(
+            task ->
+                visible(
+                    task.getTaskName(),
+                    task.getTaskInstance().get(0),
+                    task.getTaskData().isEmpty() ? null : task.getTaskData().get(0),
+                    schemaId))
+        .collect(Collectors.toList());
   }
 
   public void runTaskNow(String taskId, String taskName, Instant scheduleTime) {
     Optional<ScheduledExecution<Object>> scheduledExecutionOpt =
         scheduler.getScheduledExecution(TaskInstanceId.of(taskName, taskId));
 
-    if (scheduledExecutionOpt.isPresent() && !scheduledExecutionOpt.get().isPicked()) {
+    if (scheduledExecutionOpt.isPresent()
+        && !scheduledExecutionOpt.get().isPicked()
+        && visible(taskName, taskId, scheduledExecutionOpt.get().getData(), null)) {
       scheduler.reschedule(
           scheduledExecutionOpt.get().getTaskInstance(),
           scheduleTime != null ? scheduleTime : Instant.now());
@@ -73,7 +105,12 @@ public class TaskLogic {
         .forEach(
             (execution) -> {
               if ((!onlyFailed || execution.getConsecutiveFailures() > 0)
-                  && taskName.equals(execution.getTaskInstance().getTaskName())) {
+                  && taskName.equals(execution.getTaskInstance().getTaskName())
+                  && visible(
+                      execution.getTaskInstance().getTaskName(),
+                      execution.getTaskInstance().getId(),
+                      execution.getData(),
+                      null)) {
                 try {
                   runTaskNow(
                       execution.getTaskInstance().getId(),
@@ -90,7 +127,8 @@ public class TaskLogic {
     Optional<ScheduledExecution<Object>> scheduledExecutionOpt =
         scheduler.getScheduledExecution(TaskInstanceId.of(taskName, taskId));
 
-    if (scheduledExecutionOpt.isPresent()) {
+    if (scheduledExecutionOpt.isPresent()
+        && visible(taskName, taskId, scheduledExecutionOpt.get().getData(), null)) {
       TaskInstanceId taskInstance = scheduledExecutionOpt.get().getTaskInstance();
       scheduler.cancel(taskInstance);
     } else {
@@ -106,6 +144,7 @@ public class TaskLogic {
 
     List<TaskModel> tasks = TaskMapper.mapAllExecutionsToTaskModelUngrouped(executions);
 
+    tasks = filterVisible(tasks, params.getSchemaId());
     tasks =
         QueryUtils.searchByTaskName(
             tasks, params.getSearchTermTaskName(), params.isTaskNameExactMatch());
@@ -144,6 +183,7 @@ public class TaskLogic {
                       return task.getTaskName().equals(params.getTaskName());
                     })
                 .collect(Collectors.toList());
+    tasks = filterVisible(tasks, params.getSchemaId());
     if (tasks.isEmpty()) {
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND,
@@ -183,6 +223,18 @@ public class TaskLogic {
             caching.getExecutionsFromDBWithoutUpdatingCache(scheduler),
             TaskRequestParams.TaskFilter.ALL,
             params.getTaskName());
+    if (visibility != null) {
+      allTasks =
+          allTasks.stream()
+              .filter(
+                  task ->
+                      visible(
+                          task.getTaskInstance().getTaskName(),
+                          task.getTaskInstance().getId(),
+                          task.getData(),
+                          params.getSchemaId()))
+              .collect(Collectors.toList());
+    }
 
     Set<String> newTaskNames = new HashSet<>();
     Set<String> newFailureTaskNames = new HashSet<>();

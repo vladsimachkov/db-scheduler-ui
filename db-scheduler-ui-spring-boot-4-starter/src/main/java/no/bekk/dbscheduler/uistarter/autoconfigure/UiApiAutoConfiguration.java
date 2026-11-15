@@ -31,6 +31,7 @@ import no.bekk.dbscheduler.ui.controller.OverviewController;
 import no.bekk.dbscheduler.ui.controller.SpaFallbackMvc;
 import no.bekk.dbscheduler.ui.controller.TaskAdminController;
 import no.bekk.dbscheduler.ui.controller.TaskController;
+import no.bekk.dbscheduler.ui.service.ExecutionVisibilityFilter;
 import no.bekk.dbscheduler.ui.service.LogLogic;
 import no.bekk.dbscheduler.ui.service.OverviewService;
 import no.bekk.dbscheduler.ui.service.TaskLogic;
@@ -93,8 +94,13 @@ public class UiApiAutoConfiguration {
 
   @Bean
   @ConditionalOnMissingBean
-  TaskLogic taskLogic(Scheduler scheduler, Caching caching, DbSchedulerUiProperties properties) {
-    return new TaskLogic(scheduler, caching, properties.taskData());
+  TaskLogic taskLogic(
+      Scheduler scheduler,
+      Caching caching,
+      DbSchedulerUiProperties properties,
+      ObjectProvider<ExecutionVisibilityFilter> visibilityFilter) {
+    return new TaskLogic(
+        scheduler, caching, properties.taskData(), visibilityFilter.getIfAvailable());
   }
 
   @Bean
