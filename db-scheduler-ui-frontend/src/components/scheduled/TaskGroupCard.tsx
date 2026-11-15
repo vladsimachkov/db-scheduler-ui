@@ -13,11 +13,14 @@
  */
 import React, { useRef, useState, useEffect } from 'react';
 import { Task } from 'src/models/Task';
+import { Schema } from 'src/models/Schema';
 import TaskCard from './TaskCard';
 import { Box } from '@chakra-ui/react';
 
 interface TaskCardProps extends Task {
   refetch: () => void;
+  schemas?: Schema[];
+  showSchema?: boolean;
 }
 
 const TaskGroupCard: React.FC<TaskCardProps> = (taskProps) => {

@@ -11,6 +11,15 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * Per-execution display info resolved on the backend (parallel to `taskInstance`); absent when no
+ * display resolver is active, and a null element means no resolver recognized that execution.
+ */
+export type TaskDisplay = {
+  displayName: string | null;
+  schemaId: string | null;
+};
+
 export type Task = {
   taskName: string;
   taskInstance: string[];
@@ -23,4 +32,5 @@ export type Task = {
   consecutiveFailures: number[];
   lastHeartbeat: Date | null;
   version: number;
+  displays?: (TaskDisplay | null)[] | null;
 };

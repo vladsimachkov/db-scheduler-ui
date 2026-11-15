@@ -25,6 +25,7 @@ interface TitleRowProps {
   sortAsc: boolean;
   setSortAsc: React.Dispatch<React.SetStateAction<boolean>>;
   isDetailsView?: boolean;
+  showSchema?: boolean;
 }
 
 const TitleRow: React.FC<TitleRowProps> = ({
@@ -33,6 +34,7 @@ const TitleRow: React.FC<TitleRowProps> = ({
   setSortAsc,
   sortAsc,
   isDetailsView,
+  showSchema,
 }) => {
   const { t } = useTranslation();
   return (
@@ -59,6 +61,16 @@ const TitleRow: React.FC<TitleRowProps> = ({
           title={t('scheduled:columns.taskName')}
           name={SortBy.Name}
         />
+      )}
+      {showSchema && (
+        <Box
+          flex="2"
+          textAlign="left"
+          textColor={'textHeading'}
+          fontSize={'sm'}
+        >
+          {t('scheduled:columns.schema')}
+        </Box>
       )}
       <Box
         flex="2"

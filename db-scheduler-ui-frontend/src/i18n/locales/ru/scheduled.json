@@ -3,6 +3,7 @@
   "columns": {
     "status": "Статус",
     "taskName": "Имя задачи",
+    "schema": "Схема",
     "taskId": "Task-ID",
     "nextExecutionTime": "Время следующего выполнения"
   },

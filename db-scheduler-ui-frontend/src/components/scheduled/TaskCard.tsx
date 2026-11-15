@@ -15,6 +15,7 @@ import React from 'react';
 
 import { AccordionItem, AccordionItemProps, Divider } from '@chakra-ui/react';
 import { Task } from 'src/models/Task';
+import { Schema } from 'src/models/Schema';
 
 import { TaskAccordionButton } from 'src/components/scheduled/TaskAccordionButton';
 import { TaskAccordionItem } from 'src/components/scheduled/TaskAccordionItem';
@@ -23,6 +24,8 @@ import { isStatus } from 'src/utils/determineStatus';
 interface TaskCardProps extends Task {
   refetch: () => void;
   accordionProps?: AccordionItemProps;
+  schemas?: Schema[];
+  showSchema?: boolean;
 }
 
 const TaskCard: React.FC<TaskCardProps> = (props) => {

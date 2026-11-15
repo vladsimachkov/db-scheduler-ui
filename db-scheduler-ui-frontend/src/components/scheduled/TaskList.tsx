@@ -25,6 +25,7 @@ import { TASK_DETAILS_QUERY_KEY, getTask } from 'src/services/getTask';
 import { TASK_QUERY_KEY, getTasks } from 'src/services/getTasks';
 import { HeaderBar } from 'src/components/common/HeaderBar';
 import { TasksResponse } from 'src/models/TasksResponse';
+import { getUsersEnabled } from 'src/utils/config';
 
 const TaskList: React.FC = () => {
   const { t } = useTranslation();
@@ -35,6 +36,8 @@ const TaskList: React.FC = () => {
   // with exactly one accessible schema there is nothing to pick — it is applied automatically
   const effectiveSchemaId =
     schemas?.length === 1 ? schemas[0].id : schemaFilter;
+  // the Schema column only earns its width when there is actually more than one schema to tell apart
+  const showSchema = getUsersEnabled() && (schemas?.length ?? 0) > 1;
 
   const {
     data,
@@ -104,6 +107,7 @@ const TaskList: React.FC = () => {
         sortAsc={sortAsc}
         setSortAsc={setSortAsc}
         isDetailsView={isDetailsView}
+        showSchema={showSchema}
       />
       <Accordion allowMultiple key={taskName || 'all'}>
         {data?.pages.map((p) =>
@@ -113,9 +117,17 @@ const TaskList: React.FC = () => {
                 key={task.taskInstance + task.taskName}
                 {...task}
                 refetch={refetch}
+                schemas={schemas}
+                showSchema={showSchema}
               />
             ) : (
-              <TaskGroupCard key={task.taskName} {...task} refetch={refetch} />
+              <TaskGroupCard
+                key={task.taskName}
+                {...task}
+                refetch={refetch}
+                schemas={schemas}
+                showSchema={showSchema}
+              />
             ),
           ),
         )}

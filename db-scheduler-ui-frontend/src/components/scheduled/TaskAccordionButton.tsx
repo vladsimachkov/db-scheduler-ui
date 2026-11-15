@@ -27,6 +27,7 @@ import { dateFormatText } from 'src/utils/dateFormatText';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Task } from 'src/models/Task';
+import { Schema } from 'src/models/Schema';
 import { NumberCircleGroup } from 'src/components/common/NumberCircleGroup';
 import { AttachmentIcon } from '@chakra-ui/icons';
 import { determineStatus, isStatus } from 'src/utils/determineStatus';
@@ -34,6 +35,10 @@ import { getReadonly } from 'src/utils/config';
 
 interface TaskAccordionButtonProps extends Task {
   refetch: () => void;
+  /** Accessible schemas, used to turn a display's schemaId into a name. */
+  schemas?: Schema[];
+  /** Show the Schema column (only when the user can reach more than one schema). */
+  showSchema?: boolean;
 }
 
 export const TaskAccordionButton: React.FC<TaskAccordionButtonProps> = (
@@ -45,8 +50,15 @@ export const TaskAccordionButton: React.FC<TaskAccordionButtonProps> = (
     consecutiveFailures,
     taskInstance,
     taskData,
+    displays,
+    schemas,
+    showSchema,
     refetch,
   } = props;
+  // a resolved display name (e.g. a sql job's own name) wins over the raw instance id
+  const displayName = displays?.[0]?.displayName ?? taskInstance[0];
+  const schemaName =
+    schemas?.find((schema) => schema.id === displays?.[0]?.schemaId)?.name ?? '—';
   const { t } = useTranslation();
   const { taskName: isDetailsView } = useParams<{ taskName?: string }>();
   const navigate = useNavigate();
@@ -100,11 +112,18 @@ export const TaskAccordionButton: React.FC<TaskAccordionButtonProps> = (
               )}
             </Box>
           )}
+          {showSchema && (
+            <Box flex="2" textAlign="left" minWidth={28} overflow={'hidden'}>
+              <Text minWidth={28} noOfLines={1}>
+                {schemaName}
+              </Text>
+            </Box>
+          )}
           <Flex wrap={'wrap'} textAlign="left" flex="2" display={'flex'}>
             <Text minWidth={28}>
-              {taskInstance[0].length > 40
-                ? taskInstance[0].slice(0, 40) + '...'
-                : taskInstance[0]}
+              {displayName.length > 40
+                ? displayName.slice(0, 40) + '...'
+                : displayName}
             </Text>
             {isStatus('Group', props) && (
               <Text minWidth={28} color={'textSecondary'}>
