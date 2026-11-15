@@ -14,8 +14,10 @@
 package no.bekk.dbscheduler.ui.users.autoconfigure;
 
 import com.github.kagkarlsson.scheduler.SchedulerClient;
+import no.bekk.dbscheduler.ui.service.ExecutionVisibilityFilter;
 import no.bekk.dbscheduler.ui.sql.autoconfigure.DbSchedulerUiSqlAutoConfiguration;
 import no.bekk.dbscheduler.ui.sql.repo.SqlConnectionRepository;
+import no.bekk.dbscheduler.ui.sql.service.SqlAccessGuard;
 import no.bekk.dbscheduler.ui.sql.service.SqlJobService;
 import no.bekk.dbscheduler.ui.users.auth.AuthController;
 import no.bekk.dbscheduler.ui.users.auth.AuthSessionFilter;
@@ -31,6 +33,7 @@ import no.bekk.dbscheduler.ui.users.repo.SchemaRepository;
 import no.bekk.dbscheduler.ui.users.repo.UserRepository;
 import no.bekk.dbscheduler.ui.users.service.AuthService;
 import no.bekk.dbscheduler.ui.users.service.SchemaService;
+import no.bekk.dbscheduler.ui.users.service.SqlJobExecutionVisibility;
 import no.bekk.dbscheduler.ui.users.service.UserService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -77,6 +80,13 @@ public class DbSchedulerUiUsersAutoConfiguration {
   SessionAccessGuard sqlAccessGuard(GrantRepository grants) {
     // picked up by the sql services through ObjectProvider<SqlAccessGuard>
     return new SessionAccessGuard(grants);
+  }
+
+  @Bean
+  ExecutionVisibilityFilter sqlJobExecutionVisibility(SqlAccessGuard guard) {
+    // picked up by TaskLogic/LogLogic through ObjectProvider<ExecutionVisibilityFilter>, hiding
+    // sql-jobs of inaccessible schemas from the core task and log APIs
+    return new SqlJobExecutionVisibility(guard);
   }
 
   @Bean
