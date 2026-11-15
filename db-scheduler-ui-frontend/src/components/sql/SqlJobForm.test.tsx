@@ -21,7 +21,8 @@ import SqlJobForm from 'src/components/sql/SqlJobForm';
 import i18n from 'src/i18n';
 import { Schema } from 'src/models/Schema';
 import { SqlConnection } from 'src/models/SqlConnection';
-import { createJob } from 'src/services/sqlJobs';
+import { SqlJob } from 'src/models/SqlJob';
+import { createJob, updateJob } from 'src/services/sqlJobs';
 
 // mutable so the whole file can run with the users feature on
 let usersEnabledFlag = false;
@@ -167,5 +168,64 @@ describe('SqlJobForm with the users feature on', () => {
 
     expect(await screen.findByText('A schema is required')).toBeInTheDocument();
     await waitFor(() => expect(createJob).not.toHaveBeenCalled());
+  });
+});
+
+const legacyJob: SqlJob = {
+  jobId: 'j1',
+  name: 'legacy',
+  description: null,
+  schemaId: null,
+  schemaName: null,
+  connectionId: 'c1',
+  connectionName: 'In Main',
+  scripts: ['SELECT 1;'],
+  timeoutSeconds: 300,
+  cronExpression: '0 0 * * *',
+  recurring: true,
+  nextRunTime: null,
+  lastSuccess: null,
+  lastFailure: null,
+  consecutiveFailures: 0,
+  running: false,
+};
+
+describe('SqlJobForm with a single accessible schema', () => {
+  function renderSingle(initial?: SqlJob) {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
+    render(
+      <ChakraProvider>
+        <QueryClientProvider client={queryClient}>
+          <SqlJobForm
+            isOpen
+            onClose={vi.fn()}
+            connections={[inMain]}
+            schemas={[schemas[0]]}
+            initial={initial}
+          />
+        </QueryClientProvider>
+      </ChakraProvider>,
+    );
+  }
+
+  it('hides the picker and preselects the only schema for the connection filter', () => {
+    renderSingle();
+    expect(screen.queryByLabelText('Schema')).not.toBeInTheDocument();
+    // the auto-filled schema drives the connection filter — c1 belongs to s1
+    expect(connectionOptionNames()).toContain('In Main');
+  });
+
+  it('assigns the only schema when editing a legacy schema-less job', async () => {
+    renderSingle(legacyJob);
+    expect(screen.queryByLabelText('Schema')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(updateJob).toHaveBeenCalled());
+    expect(vi.mocked(updateJob).mock.calls[0][1]).toMatchObject({
+      schemaId: 's1',
+    });
   });
 });

@@ -166,7 +166,7 @@ const SqlJobsPage: React.FC = () => {
         <Text fontSize={'2xl'} fontWeight={'semibold'}>
           {t('title')}
         </Text>
-        {usersEnabled && (
+        {usersEnabled && (schemas?.length ?? 0) > 1 && (
           <Select
             ml={'auto'}
             w={'auto'}

@@ -79,10 +79,15 @@ import { JOBS_QUERY_KEY, createJob, updateJob } from 'src/services/sqlJobs';
 import { Schema } from 'src/models/Schema';
 import { getUsersEnabled } from 'src/utils/config';
 
-function defaultValuesFor(initial?: SqlJob): SqlJobFormValues {
+function defaultValuesFor(
+  initial?: SqlJob,
+  singleSchemaId?: string | null,
+): SqlJobFormValues {
   return {
     name: initial?.name ?? '',
-    schemaId: initial?.schemaId ?? '',
+    // a lone accessible schema is applied automatically (its picker is hidden);
+    // editing a legacy schema-less job therefore assigns it to that schema
+    schemaId: initial?.schemaId || singleSchemaId || '',
     description: initial?.description ?? '',
     connectionId: initial?.connectionId ?? '',
     scheduleType: initial && !initial.recurring ? 'once' : 'cron',
@@ -223,6 +228,9 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
   // keyed on useFieldArray item ids — stable while the modal stays open
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  // with exactly one accessible schema the picker is hidden and the schema auto-filled
+  const singleSchemaId =
+    getUsersEnabled() && schemas.length === 1 ? schemas[0].id : null;
 
   const {
     register,
@@ -234,7 +242,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
     formState: { errors },
   } = useForm<SqlJobFormValues>({
     resolver: zodResolver(sqlJobFormSchema(getUsersEnabled())),
-    defaultValues: defaultValuesFor(initial),
+    defaultValues: defaultValuesFor(initial, singleSchemaId),
   });
   const { fields, append, remove, move } = useFieldArray({
     control,
@@ -258,14 +266,16 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      reset(defaultValuesFor(initial));
+      reset(defaultValuesFor(initial, singleSchemaId));
       setFormError(null);
       setCollapsed({});
     }
     // Keyed on the stable id, not the object: polling hands us a fresh SqlJob
     // instance every 2s, which would otherwise wipe in-progress edits.
+    // singleSchemaId is in the deps so the auto-fill lands if the schema list
+    // arrives after the modal was opened.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initial?.jobId]);
+  }, [isOpen, initial?.jobId, singleSchemaId]);
 
   const scheduleType = watch('scheduleType');
 
@@ -360,7 +370,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
                 <Input {...register('description')} />
               </FormControl>
 
-              {usersEnabled && (
+              {usersEnabled && !singleSchemaId && (
                 <FormControl isInvalid={!!errors.schemaId}>
                   <FormLabel>{t('schema')}</FormLabel>
                   <Controller

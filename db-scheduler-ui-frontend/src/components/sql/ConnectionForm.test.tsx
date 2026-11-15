@@ -235,18 +235,25 @@ describe('ConnectionForm', () => {
   });
 });
 
+const schemaS1 = {
+  id: 's1',
+  name: 'Main',
+  description: null,
+  createdTime: '2026-01-01T00:00:00Z',
+  updatedTime: '2026-01-01T00:00:00Z',
+};
+const schemaS2 = {
+  id: 's2',
+  name: 'Other',
+  description: null,
+  createdTime: '2026-01-01T00:00:00Z',
+  updatedTime: '2026-01-01T00:00:00Z',
+};
+
 describe('ConnectionForm with the users feature on', () => {
   beforeEach(() => {
     usersEnabledFlag = true;
-    vi.mocked(listSchemas).mockResolvedValue([
-      {
-        id: 's1',
-        name: 'Main',
-        description: null,
-        createdTime: '2026-01-01T00:00:00Z',
-        updatedTime: '2026-01-01T00:00:00Z',
-      },
-    ]);
+    vi.mocked(listSchemas).mockResolvedValue([schemaS1, schemaS2]);
   });
   afterEach(() => {
     usersEnabledFlag = false;
@@ -275,6 +282,36 @@ describe('ConnectionForm with the users feature on', () => {
     await screen.findByText('Main');
     fireEvent.change(screen.getByLabelText('Schema'), {
       target: { value: 's1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => expect(createConnection).toHaveBeenCalled());
+    expect(
+      vi.mocked(createConnection).mock.calls[0][0].schemaId,
+    ).toBe('s1');
+  });
+});
+
+describe('ConnectionForm with a single accessible schema', () => {
+  beforeEach(() => {
+    usersEnabledFlag = true;
+    vi.mocked(listSchemas).mockResolvedValue([schemaS1]);
+  });
+  afterEach(() => {
+    usersEnabledFlag = false;
+  });
+
+  it('hides the picker once the lone schema is known and auto-fills it', async () => {
+    vi.mocked(createConnection).mockResolvedValue(editedConnection);
+    renderForm();
+    // the picker is visible until the schema list arrives, then disappears (auto-fill)
+    await waitFor(() =>
+      expect(screen.queryByLabelText('Schema')).not.toBeInTheDocument(),
+    );
+
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'demo' } });
+    fireEvent.change(screen.getByLabelText('JDBC URL'), {
+      target: { value: 'jdbc:h2:mem:demo' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 

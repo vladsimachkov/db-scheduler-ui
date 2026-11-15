@@ -82,10 +82,14 @@ const DIALECT_DRIVER_HINT: Record<SqlDialect, string> = {
   GENERIC: '',
 };
 
-function defaultValuesFor(initial?: SqlConnection): ConnectionFormValues {
+function defaultValuesFor(
+  initial?: SqlConnection,
+  singleSchemaId?: string | null,
+): ConnectionFormValues {
   return {
     name: initial?.name ?? '',
-    schemaId: initial?.schemaId ?? '',
+    // a lone accessible schema is applied automatically (its picker is hidden)
+    schemaId: initial?.schemaId || singleSchemaId || '',
     dialect: initial?.dialect ?? 'ORACLE',
     jdbcUrl: initial?.jdbcUrl ?? '',
     driverClass: initial?.driverClass ?? '',
@@ -110,6 +114,9 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
   const { t } = useTranslation('connections');
   const usersEnabled = getUsersEnabled();
   const { data: schemas, isError: schemasError } = useSchemas();
+  // with exactly one accessible schema the picker is hidden and the schema auto-filled
+  const singleSchemaId =
+    usersEnabled && (schemas?.length ?? 0) === 1 ? schemas![0].id : null;
   const toast = useToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
@@ -125,20 +132,22 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     formState: { errors },
   } = useForm<ConnectionFormValues>({
     resolver: zodResolver(connectionFormSchema(usersEnabled)),
-    defaultValues: defaultValuesFor(initial),
+    defaultValues: defaultValuesFor(initial, singleSchemaId),
   });
 
   useEffect(() => {
     if (isOpen) {
-      reset(defaultValuesFor(initial));
+      reset(defaultValuesFor(initial, singleSchemaId));
       setFormError(null);
       setTestResult(null);
       setTestFailed(false);
     }
     // Keyed on the stable id, not the object: a refetch would otherwise wipe
     // in-progress edits with a fresh-but-identical SqlConnection instance.
+    // singleSchemaId is in the deps so the auto-fill lands if the schema list
+    // arrives after the modal was opened.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initial?.id]);
+  }, [isOpen, initial?.id, singleSchemaId]);
 
   const values = watch();
   const clearPassword = values.clearPassword;
@@ -215,7 +224,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
                 )}
               </FormControl>
 
-              {usersEnabled && (
+              {usersEnabled && !singleSchemaId && (
                 <FormControl isInvalid={!!errors.schemaId}>
                   <FormLabel>{t('schema')}</FormLabel>
                   <Controller
