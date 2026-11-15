@@ -15,8 +15,10 @@ import { expect, Page, test } from '@playwright/test';
 
 /**
  * Functional walk of the users & schemas feature through the real UI:
- * login gate, admin wiring up a schema + user + grant, the granted user working
- * inside the schema, and the schema vanishing for that user once the grant is revoked.
+ * login gate, admin wiring up two schemas + user + grant, the schema pickers the
+ * admin gets with 2+ schemas, the granted user working inside the single schema
+ * with every schema picker hidden and auto-filled, and the schema vanishing for
+ * that user once the grant is revoked.
  *
  * Requires a running example-app on the `users` profile with a fresh database
  * (bootstrap admin/admin), see playwright.config.ts.
@@ -37,8 +39,13 @@ async function signOut(page: Page) {
   await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
 }
 
+/** One row of the schemas table, so per-schema buttons stay unambiguous. */
+function schemaRow(page: Page, name: string) {
+  return page.getByRole('row').filter({ has: page.getByRole('cell', { name, exact: true }) });
+}
+
 test.describe.serial('users and schemas', () => {
-  test('admin logs in and wires up schema, user and grant', async ({ page }) => {
+  test('admin logs in and wires up schemas, user and grant', async ({ page }) => {
     await page.goto('/db-scheduler');
 
     // the login gate replaces the dashboard
@@ -53,12 +60,16 @@ test.describe.serial('users and schemas', () => {
     await expect(page.getByRole('button', { name: 'Users' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Schemas' })).toBeVisible();
 
-    // --- schema ---
+    // --- schemas: two of them, so the admin keeps the schema pickers ---
     await page.getByRole('button', { name: 'Schemas' }).click();
     await page.getByRole('button', { name: 'Add schema' }).click();
     await page.getByLabel(/^Name/).fill('Main');
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByRole('cell', { name: 'Main' })).toBeVisible();
+    await page.getByRole('button', { name: 'Add schema' }).click();
+    await page.getByLabel(/^Name/).fill('Reports');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('cell', { name: 'Reports' })).toBeVisible();
 
     // --- user ---
     await page.getByRole('button', { name: 'Users' }).click();
@@ -68,9 +79,9 @@ test.describe.serial('users and schemas', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByRole('cell', { name: 'bob' })).toBeVisible();
 
-    // --- grant Main -> bob ---
+    // --- grant Main -> bob (scoped to the Main row: two Access buttons exist) ---
     await page.getByRole('button', { name: 'Schemas' }).click();
-    await page.getByRole('button', { name: 'Access' }).click();
+    await schemaRow(page, 'Main').getByRole('button', { name: 'Access' }).click();
     await expect(page.getByText('No one has access yet')).toBeVisible();
     await page.getByRole('dialog').getByRole('combobox').selectOption(BOB.username);
     await page.getByRole('button', { name: 'Grant' }).click();
@@ -83,9 +94,19 @@ test.describe.serial('users and schemas', () => {
       .getByRole('row')
       .filter({ has: page.getByRole('cell', { name: 'admin', exact: true }) });
     await expect(selfRow.getByRole('button', { name: 'Delete' })).toBeDisabled();
+
+    // with two accessible schemas the Scheduled and History pages offer the picker
+    for (const path of ['/db-scheduler/scheduled', '/db-scheduler/history/all']) {
+      await page.goto(path);
+      const filter = page.getByRole('combobox', { name: 'Schema' });
+      await expect(filter).toBeVisible();
+      await expect(filter.locator('option')).toHaveText(['All schemas', 'Main', 'Reports']);
+    }
   });
 
-  test('granted user works inside the schema and cannot see the admin area', async ({ page }) => {
+  test('granted user works inside the single schema without any schema picker', async ({
+    page,
+  }) => {
     await page.goto('/db-scheduler');
     await signIn(page, BOB);
 
@@ -93,20 +114,24 @@ test.describe.serial('users and schemas', () => {
     await expect(page.getByRole('button', { name: 'Users' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Schemas' })).toHaveCount(0);
 
-    // bob creates a connection inside the granted schema
+    // bob creates a connection: one accessible schema -> no picker, Main auto-filled
     await page.getByRole('button', { name: 'Connections' }).click();
     await page.getByRole('button', { name: 'Add connection' }).click();
     await page.getByLabel('Name', { exact: true }).fill('bob-conn');
     await page.getByLabel('JDBC URL').fill('jdbc:h2:mem:whatever');
-    await page.getByLabel('Schema').selectOption({ label: 'Main' });
+    await expect(page.getByRole('combobox', { name: 'Schema' })).toHaveCount(0);
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByRole('cell', { name: 'bob-conn' })).toBeVisible();
 
-    // the schema filter on the jobs page offers exactly the granted schema
+    // the jobs page has no filter either — the single schema needs no choosing
     await page.getByRole('button', { name: 'SQL jobs' }).click();
-    const filter = page.getByRole('combobox', { name: 'Schema' });
-    await expect(filter).toBeVisible();
-    await expect(filter).toContainText('Main');
+    await expect(page.getByRole('combobox', { name: 'Schema' })).toHaveCount(0);
+
+    // and neither do the Scheduled and History pages
+    for (const path of ['/db-scheduler/scheduled', '/db-scheduler/history/all']) {
+      await page.goto(path);
+      await expect(page.getByRole('combobox', { name: 'Schema' })).toHaveCount(0);
+    }
 
     await signOut(page);
   });
@@ -116,7 +141,7 @@ test.describe.serial('users and schemas', () => {
     await page.goto('/db-scheduler');
     await signIn(page, ADMIN);
     await page.getByRole('button', { name: 'Schemas' }).click();
-    await page.getByRole('button', { name: 'Access' }).click();
+    await schemaRow(page, 'Main').getByRole('button', { name: 'Access' }).click();
     await page.getByRole('button', { name: 'Revoke' }).click();
     await expect(page.getByText('No one has access yet')).toBeVisible();
     await page.getByRole('button', { name: 'Close' }).click();
