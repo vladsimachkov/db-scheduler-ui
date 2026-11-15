@@ -101,12 +101,14 @@ public class UiApiAutoConfiguration {
       DbSchedulerUiProperties properties,
       ObjectProvider<ExecutionVisibilityFilter> visibilityFilter,
       ObjectProvider<TaskDisplayResolver> displayResolver) {
+    // orderedStream: several features may each register a resolver (e.g. the sql module plus a
+    // host app's own); getIfAvailable would fail startup on the second bean.
     return new TaskLogic(
         scheduler,
         caching,
         properties.taskData(),
         visibilityFilter.getIfAvailable(),
-        displayResolver.getIfAvailable());
+        displayResolver.orderedStream().toList());
   }
 
   @Bean

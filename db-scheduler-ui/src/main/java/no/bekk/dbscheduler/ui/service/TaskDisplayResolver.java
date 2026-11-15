@@ -20,9 +20,11 @@ import no.bekk.dbscheduler.ui.model.TaskDisplay;
  * interpret on its own — for example sql-jobs, whose human-readable name and schema live inside the
  * task-data blob rather than in the scheduler columns.
  *
- * <p>The bean is only present when such a feature is active; without it no display info is sent.
- * The core resolves display info from the ungrouped task list, where the task-data blob is still
- * deserialized, independently of the task-data UI setting.
+ * <p>Beans are only present when such a feature is active; without any, no display info is sent.
+ * When several resolvers are registered they are consulted in order and the first non-null result
+ * wins, so each feature can claim only the executions it understands. The core resolves display
+ * info from the ungrouped task list, where the task-data blob is still deserialized, independently
+ * of the task-data UI setting.
  */
 public interface TaskDisplayResolver {
 

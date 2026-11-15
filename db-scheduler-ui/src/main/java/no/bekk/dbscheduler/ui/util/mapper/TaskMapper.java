@@ -50,20 +50,25 @@ public class TaskMapper {
 
   /**
    * Resolves display info for ungrouped models (one execution each) while their task-data blob is
-   * still deserialized. A null resolver is a no-op; a resolver returning null for an execution
-   * leaves a null hole in the parallel list.
+   * still deserialized. Resolvers are consulted in order and the first non-null result wins, so
+   * several features can each contribute displays for their own executions. A null or empty list is
+   * a no-op; every resolver answering null for an execution leaves a null hole in the parallel
+   * list.
    */
   public static List<TaskModel> applyDisplays(
-      List<TaskModel> ungroupedTasks, TaskDisplayResolver resolver) {
-    if (resolver == null) {
+      List<TaskModel> ungroupedTasks, List<TaskDisplayResolver> resolvers) {
+    if (resolvers == null || resolvers.isEmpty()) {
       return ungroupedTasks;
     }
     for (TaskModel task : ungroupedTasks) {
-      TaskDisplay display =
-          resolver.resolve(
-              task.getTaskName(),
-              task.getTaskInstance().get(0),
-              task.getTaskData().isEmpty() ? null : task.getTaskData().get(0));
+      Object taskData = task.getTaskData().isEmpty() ? null : task.getTaskData().get(0);
+      TaskDisplay display = null;
+      for (TaskDisplayResolver resolver : resolvers) {
+        display = resolver.resolve(task.getTaskName(), task.getTaskInstance().get(0), taskData);
+        if (display != null) {
+          break;
+        }
+      }
       task.setDisplays(Collections.singletonList(display));
     }
     return ungroupedTasks;
