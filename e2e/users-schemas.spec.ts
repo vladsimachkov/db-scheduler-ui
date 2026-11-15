@@ -136,6 +136,61 @@ test.describe.serial('users and schemas', () => {
     await signOut(page);
   });
 
+  test('scheduled page shows the job name and a schema column for multi-schema users', async ({
+    page,
+  }) => {
+    await page.goto('/db-scheduler');
+    await signIn(page, ADMIN);
+
+    // create a sql job through the API (the script editor is CodeMirror — out of scope here);
+    // the UI sign-in above already put the session cookie on the context
+    // mutating endpoints demand the X-Requested-With header (CSRF guard the SPA always sends)
+    const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+    const schemas = await (await page.request.get('/db-scheduler-api/sql-schemas')).json();
+    const mainId = schemas.find((s: { name: string }) => s.name === 'Main').id;
+    const connection = await page.request.post('/db-scheduler-api/sql-connections', {
+      headers,
+      data: {
+        name: 'e2e-conn',
+        dialect: 'POSTGRESQL',
+        jdbcUrl: 'jdbc:h2:mem:e2e;DB_CLOSE_DELAY=-1',
+        schemaId: mainId,
+      },
+    });
+    expect(connection.ok(), await connection.text()).toBeTruthy();
+    const connectionId = (await connection.json()).id;
+    const job = await page.request.post('/db-scheduler-api/sql-jobs', {
+      headers,
+      data: {
+        name: 'nightly',
+        connectionId,
+        schemaId: mainId,
+        scripts: ['SELECT 1;'],
+        cronExpression: '0 0 3 * * *',
+        timeoutSeconds: 30,
+      },
+    });
+    expect(job.ok(), await job.text()).toBeTruthy();
+
+    // the row carries the job's own name and its schema, and the column header is there
+    // (a task row is an h2 wrapping the accordion button, not a button itself)
+    await page.goto('/db-scheduler/scheduled');
+    await expect(page.getByText('Schema', { exact: true })).toBeVisible();
+    const jobRow = page.getByRole('heading', { level: 2 }).filter({ hasText: 'nightly' });
+    await expect(jobRow).toContainText('Main');
+
+    // bob reaches only one schema: same row, but no Schema column anywhere
+    await signOut(page);
+    await signIn(page, BOB);
+    await page.goto('/db-scheduler/scheduled');
+    await expect(page.getByText('Schema', { exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole('heading', { level: 2 }).filter({ hasText: 'nightly' }),
+    ).toBeVisible();
+
+    await signOut(page);
+  });
+
   test('revoking the grant hides the schema and its contents from the user', async ({ page }) => {
     // admin revokes
     await page.goto('/db-scheduler');
