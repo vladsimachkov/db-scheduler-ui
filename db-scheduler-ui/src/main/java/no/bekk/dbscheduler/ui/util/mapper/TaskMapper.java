@@ -20,7 +20,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import no.bekk.dbscheduler.ui.model.TaskDisplay;
 import no.bekk.dbscheduler.ui.model.TaskModel;
+import no.bekk.dbscheduler.ui.service.TaskDisplayResolver;
 
 public class TaskMapper {
 
@@ -40,8 +43,30 @@ public class TaskMapper {
                     execution.getLastFailure(),
                     List.of(execution.getConsecutiveFailures()), // Modified here
                     null,
-                    0))
+                    0,
+                    null))
         .collect(Collectors.toList());
+  }
+
+  /**
+   * Resolves display info for ungrouped models (one execution each) while their task-data blob is
+   * still deserialized. A null resolver is a no-op; a resolver returning null for an execution
+   * leaves a null hole in the parallel list.
+   */
+  public static List<TaskModel> applyDisplays(
+      List<TaskModel> ungroupedTasks, TaskDisplayResolver resolver) {
+    if (resolver == null) {
+      return ungroupedTasks;
+    }
+    for (TaskModel task : ungroupedTasks) {
+      TaskDisplay display =
+          resolver.resolve(
+              task.getTaskName(),
+              task.getTaskInstance().get(0),
+              task.getTaskData().isEmpty() ? null : task.getTaskData().get(0));
+      task.setDisplays(Collections.singletonList(display));
+    }
+    return ungroupedTasks;
   }
 
   public static List<TaskModel> groupTasks(List<TaskModel> tasks) {
@@ -97,6 +122,20 @@ public class TaskMapper {
                       .map(TaskModel::getConsecutiveFailures)
                       .flatMap(List::stream)
                       .collect(Collectors.toList())); // Modified here
+              // keep displays aligned with the merged instances; a member without display
+              // info contributes a null hole, and an all-null merge stays null
+              if (taskModels.stream().anyMatch(t -> t.getDisplays() != null)) {
+                taskModel.setDisplays(
+                    taskModels.stream()
+                        .flatMap(
+                            t ->
+                                t.getDisplays() == null
+                                    ? Stream.of((TaskDisplay) null)
+                                    : t.getDisplays().stream())
+                        .collect(Collectors.toList()));
+              } else {
+                taskModel.setDisplays(null);
+              }
               return taskModel;
             })
         .sorted(Comparator.comparing(TaskModel::getTaskName))

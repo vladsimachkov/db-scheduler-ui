@@ -37,4 +37,7 @@ public class TaskModel {
   private List<Integer> consecutiveFailures;
   private Instant lastHeartbeat;
   private int version;
+
+  /** Per-execution display info, parallel to {@link #taskInstance}; null when nothing resolved. */
+  private List<TaskDisplay> displays;
 }

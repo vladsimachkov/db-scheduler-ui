@@ -46,9 +46,10 @@ public class TaskLogic {
   private final Caching caching;
   private final boolean showData;
   private final ExecutionVisibilityFilter visibility;
+  private final TaskDisplayResolver displayResolver;
 
   public TaskLogic(Scheduler scheduler, Caching caching, boolean showData) {
-    this(scheduler, caching, showData, null);
+    this(scheduler, caching, showData, null, null);
   }
 
   public TaskLogic(
@@ -56,10 +57,20 @@ public class TaskLogic {
       Caching caching,
       boolean showData,
       ExecutionVisibilityFilter visibility) {
+    this(scheduler, caching, showData, visibility, null);
+  }
+
+  public TaskLogic(
+      Scheduler scheduler,
+      Caching caching,
+      boolean showData,
+      ExecutionVisibilityFilter visibility,
+      TaskDisplayResolver displayResolver) {
     this.scheduler = scheduler;
     this.caching = caching;
     this.showData = showData;
     this.visibility = visibility;
+    this.displayResolver = displayResolver;
   }
 
   private boolean visible(String taskName, String taskInstance, Object taskData, String schemaId) {
@@ -143,6 +154,7 @@ public class TaskLogic {
         caching.getExecutionsFromCacheOrDB(params.isRefresh(), scheduler);
 
     List<TaskModel> tasks = TaskMapper.mapAllExecutionsToTaskModelUngrouped(executions);
+    tasks = TaskMapper.applyDisplays(tasks, displayResolver);
 
     tasks = filterVisible(tasks, params.getSchemaId());
     tasks =
@@ -183,6 +195,7 @@ public class TaskLogic {
                       return task.getTaskName().equals(params.getTaskName());
                     })
                 .collect(Collectors.toList());
+    tasks = TaskMapper.applyDisplays(tasks, displayResolver);
     tasks = filterVisible(tasks, params.getSchemaId());
     if (tasks.isEmpty()) {
       throw new ResponseStatusException(

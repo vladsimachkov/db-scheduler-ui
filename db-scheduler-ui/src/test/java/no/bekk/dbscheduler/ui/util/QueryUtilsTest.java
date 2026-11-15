@@ -168,6 +168,7 @@ class QueryUtilsTest {
         null,
         List.of(failures),
         null,
-        1);
+        1,
+        null);
   }
 }

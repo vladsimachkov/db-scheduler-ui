@@ -34,6 +34,7 @@ import no.bekk.dbscheduler.ui.controller.TaskController;
 import no.bekk.dbscheduler.ui.service.ExecutionVisibilityFilter;
 import no.bekk.dbscheduler.ui.service.LogLogic;
 import no.bekk.dbscheduler.ui.service.OverviewService;
+import no.bekk.dbscheduler.ui.service.TaskDisplayResolver;
 import no.bekk.dbscheduler.ui.service.TaskLogic;
 import no.bekk.dbscheduler.ui.util.Caching;
 import no.bekk.dbscheduler.uistarter.config.DbSchedulerUiProperties;
@@ -98,9 +99,14 @@ public class UiApiAutoConfiguration {
       Scheduler scheduler,
       Caching caching,
       DbSchedulerUiProperties properties,
-      ObjectProvider<ExecutionVisibilityFilter> visibilityFilter) {
+      ObjectProvider<ExecutionVisibilityFilter> visibilityFilter,
+      ObjectProvider<TaskDisplayResolver> displayResolver) {
     return new TaskLogic(
-        scheduler, caching, properties.taskData(), visibilityFilter.getIfAvailable());
+        scheduler,
+        caching,
+        properties.taskData(),
+        visibilityFilter.getIfAvailable(),
+        displayResolver.getIfAvailable());
   }
 
   @Bean
