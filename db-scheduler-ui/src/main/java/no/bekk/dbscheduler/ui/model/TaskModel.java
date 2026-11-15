@@ -13,6 +13,7 @@
  */
 package no.bekk.dbscheduler.ui.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -38,6 +39,11 @@ public class TaskModel {
   private Instant lastHeartbeat;
   private int version;
 
-  /** Per-execution display info, parallel to {@link #taskInstance}; null when nothing resolved. */
+  /**
+   * Per-execution display info, parallel to {@link #taskInstance}. Absent from the JSON when no
+   * display resolver is active, so resolver-less responses keep their old shape (Jackson includes
+   * null fields by default); a null element means no resolver recognized that execution.
+   */
+  @JsonInclude(JsonInclude.Include.NON_NULL)
   private List<TaskDisplay> displays;
 }
