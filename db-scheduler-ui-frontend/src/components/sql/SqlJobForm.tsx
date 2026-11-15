@@ -239,6 +239,7 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
     watch,
     reset,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<SqlJobFormValues>({
     resolver: zodResolver(sqlJobFormSchema(getUsersEnabled())),
@@ -272,10 +273,8 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
     }
     // Keyed on the stable id, not the object: polling hands us a fresh SqlJob
     // instance every 2s, which would otherwise wipe in-progress edits.
-    // singleSchemaId is in the deps so the auto-fill lands if the schema list
-    // arrives after the modal was opened.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initial?.jobId, singleSchemaId]);
+  }, [isOpen, initial?.jobId]);
 
   const scheduleType = watch('scheduleType');
 
@@ -297,10 +296,14 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
 
   const usersEnabled = getUsersEnabled();
   const selectedSchema = watch('schemaId');
-  // a job's connection must belong to the job's schema, so offer only matching ones
+  // a job's connection must belong to the job's schema, so offer only matching
+  // ones — but always keep the job's own connection visible, even when it does
+  // not match (a legacy schema-less connection must not render as a blank field)
   const visibleConnections =
     usersEnabled && selectedSchema
-      ? connections.filter((c) => c.schemaId === selectedSchema)
+      ? connections.filter(
+          (c) => c.schemaId === selectedSchema || c.id === initial?.connectionId,
+        )
       : connections;
 
   const onSchemaChange = (schemaId: string) => {
@@ -314,6 +317,15 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
       setValue('connectionId', '');
     }
   };
+
+  // The schema list may arrive after the modal was opened — apply the auto-fill
+  // with a targeted setValue so a late response cannot reset in-progress input.
+  useEffect(() => {
+    if (isOpen && singleSchemaId && !getValues('schemaId')) {
+      onSchemaChange(singleSchemaId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, singleSchemaId]);
 
   const onSubmit = handleSubmit((values) => {
     setFormError(null);

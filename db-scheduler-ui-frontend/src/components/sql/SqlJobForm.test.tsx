@@ -191,7 +191,7 @@ const legacyJob: SqlJob = {
 };
 
 describe('SqlJobForm with a single accessible schema', () => {
-  function renderSingle(initial?: SqlJob) {
+  function renderSingle(initial?: SqlJob, connections: SqlConnection[] = [inMain]) {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
@@ -201,7 +201,7 @@ describe('SqlJobForm with a single accessible schema', () => {
           <SqlJobForm
             isOpen
             onClose={vi.fn()}
-            connections={[inMain]}
+            connections={connections}
             schemas={[schemas[0]]}
             initial={initial}
           />
@@ -227,5 +227,18 @@ describe('SqlJobForm with a single accessible schema', () => {
     expect(vi.mocked(updateJob).mock.calls[0][1]).toMatchObject({
       schemaId: 's1',
     });
+  });
+
+  it('keeps a legacy schema-less connection visible when the schema auto-fills', () => {
+    // a pre-users job whose connection never got a schema: the auto-filled
+    // schema must not blank out the job's own connection in the dropdown
+    const legacyConn: SqlConnection = { ...inMain, id: 'c0', name: 'Legacy', schemaId: null };
+    renderSingle(
+      { ...legacyJob, connectionId: 'c0', connectionName: 'Legacy' },
+      [legacyConn],
+    );
+    expect(screen.queryByLabelText('Schema')).not.toBeInTheDocument();
+    expect(connectionSelect()).toHaveValue('c0');
+    expect(within(connectionSelect()).getByRole('option', { name: 'Legacy' })).toBeInTheDocument();
   });
 });
