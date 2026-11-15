@@ -23,6 +23,7 @@ import no.bekk.dbscheduler.ui.controller.SqlConnectionAdminController;
 import no.bekk.dbscheduler.ui.controller.SqlConnectionController;
 import no.bekk.dbscheduler.ui.controller.SqlJobAdminController;
 import no.bekk.dbscheduler.ui.controller.SqlJobController;
+import no.bekk.dbscheduler.ui.service.TaskDisplayResolver;
 import no.bekk.dbscheduler.ui.sql.config.DbSchedulerUiSqlProperties;
 import no.bekk.dbscheduler.ui.sql.crypto.CredentialCipher;
 import no.bekk.dbscheduler.ui.sql.exec.SqlJobExecutor;
@@ -34,6 +35,7 @@ import no.bekk.dbscheduler.ui.sql.repo.SqlJobExecutionRepository;
 import no.bekk.dbscheduler.ui.sql.service.SqlAccessGuard;
 import no.bekk.dbscheduler.ui.sql.service.SqlConnectionService;
 import no.bekk.dbscheduler.ui.sql.service.SqlJobService;
+import no.bekk.dbscheduler.ui.sql.service.SqlJobTaskDisplayResolver;
 import no.bekk.dbscheduler.ui.users.repo.SchemaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,6 +156,11 @@ public class DbSchedulerUiSqlAutoConfiguration {
       SchedulerClient client,
       ObjectProvider<SqlAccessGuard> guard) {
     return new SqlConnectionService(repository, pools, cipher, client, guard.getIfAvailable());
+  }
+
+  @Bean
+  TaskDisplayResolver sqlJobTaskDisplayResolver() {
+    return new SqlJobTaskDisplayResolver();
   }
 
   @Bean
