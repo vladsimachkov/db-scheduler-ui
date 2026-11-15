@@ -50,6 +50,7 @@ export const pollTasks = async (
       'taskInstanceExactMatch',
       params.taskInstanceExactMatch.toString(),
     );
+  params.schemaId && queryParams.append('schemaId', params.schemaId);
 
   return apiGet<PollResponse>(`/tasks/poll?${queryParams}`);
 };

@@ -11,7 +11,7 @@
  * express or implied. See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { Accordion, Box, Button, Flex } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,7 @@ import TaskCard from 'src/components/scheduled/TaskCard';
 import TaskGroupCard from './TaskGroupCard';
 import TitleRow from 'src/components/common/TitleRow';
 import { useInfiniteScrolling } from 'src/hooks/useInfiniteTaskScrolling';
+import { useSchemas } from 'src/hooks/useSchemas';
 import { TASK_DETAILS_QUERY_KEY, getTask } from 'src/services/getTask';
 import { TASK_QUERY_KEY, getTasks } from 'src/services/getTasks';
 import { HeaderBar } from 'src/components/common/HeaderBar';
@@ -29,6 +30,11 @@ const TaskList: React.FC = () => {
   const { t } = useTranslation();
   const { taskName } = useParams<{ taskName?: string }>();
   const isDetailsView = !!taskName;
+  const [schemaFilter, setSchemaFilter] = useState('');
+  const { data: schemas } = useSchemas();
+  // with exactly one accessible schema there is nothing to pick — it is applied automatically
+  const effectiveSchemaId =
+    schemas?.length === 1 ? schemas[0].id : schemaFilter;
 
   const {
     data,
@@ -56,8 +62,13 @@ const TaskList: React.FC = () => {
           fetchDataFunction: getTask,
           taskName: taskName,
           baseQueryKey: TASK_DETAILS_QUERY_KEY,
+          schemaId: effectiveSchemaId || undefined,
         }
-      : { fetchDataFunction: getTasks, baseQueryKey: TASK_QUERY_KEY },
+      : {
+          fetchDataFunction: getTasks,
+          baseQueryKey: TASK_QUERY_KEY,
+          schemaId: effectiveSchemaId || undefined,
+        },
   );
 
   return (
@@ -72,6 +83,7 @@ const TaskList: React.FC = () => {
           searchTermTaskInstance,
           taskInstanceExactMatch,
           taskNameExactMatch,
+          schemaId: effectiveSchemaId || undefined,
         }}
         setCurrentFilter={setCurrentFilter}
         setSearchTermTaskName={setSearchTermTaskName}
@@ -80,6 +92,9 @@ const TaskList: React.FC = () => {
         setTaskInstanceExactMatch={setTaskInstanceExactMatch}
         taskNameExactMatch={taskNameExactMatch}
         taskInstanceExactMatch={taskInstanceExactMatch}
+        schemaOptions={schemas}
+        schemaId={schemaFilter}
+        onSchemaIdChange={setSchemaFilter}
         refetch={refetch}
       />
 

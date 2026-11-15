@@ -12,13 +12,14 @@
  * limitations under the License.
  */
 import { Accordion, Box, Button, Flex, HStack, Text } from '@chakra-ui/react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LogCard } from 'src/components/history/LogCard';
 import { DateTimeInput } from 'src/components/input/DateTimeInput';
 import { SortButton } from 'src/components/input/SortButton';
 import { useInfiniteScrolling } from 'src/hooks/useInfiniteTaskScrolling';
+import { useSchemas } from 'src/hooks/useSchemas';
 import { SortBy } from 'src/models/QueryParams';
 import { LogResponse } from 'src/models/TasksResponse';
 import { ALL_LOG_QUERY_KEY, getLogs } from 'src/services/getLogs';
@@ -28,6 +29,11 @@ export const LogList: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { taskName, taskInstance } = location.state || {};
+  const [schemaFilter, setSchemaFilter] = useState('');
+  const { data: schemas } = useSchemas();
+  // with exactly one accessible schema there is nothing to pick — it is applied automatically
+  const effectiveSchemaId =
+    schemas?.length === 1 ? schemas[0].id : schemaFilter;
 
   const {
     data,
@@ -60,8 +66,13 @@ export const LogList: React.FC = () => {
           taskName: taskName,
           taskInstance: taskInstance,
           baseQueryKey: ALL_LOG_QUERY_KEY,
+          schemaId: effectiveSchemaId || undefined,
         }
-      : { fetchDataFunction: getLogs, baseQueryKey: ALL_LOG_QUERY_KEY },
+      : {
+          fetchDataFunction: getLogs,
+          baseQueryKey: ALL_LOG_QUERY_KEY,
+          schemaId: effectiveSchemaId || undefined,
+        },
   );
 
   useEffect(() => {
@@ -95,10 +106,14 @@ export const LogList: React.FC = () => {
           searchTermTaskInstance,
           taskInstanceExactMatch,
           taskNameExactMatch,
+          schemaId: effectiveSchemaId || undefined,
         }}
         setCurrentFilter={setCurrentFilter}
         setSearchTermTaskName={setSearchTermTaskName}
         setSearchTermTaskInstance={setSearchTermTaskInstance}
+        schemaOptions={schemas}
+        schemaId={schemaFilter}
+        onSchemaIdChange={setSchemaFilter}
         refetch={refetch}
         setTaskNameExactMatch={setTaskNameExactMatch}
         setTaskInstanceExactMatch={setTaskInstanceExactMatch}

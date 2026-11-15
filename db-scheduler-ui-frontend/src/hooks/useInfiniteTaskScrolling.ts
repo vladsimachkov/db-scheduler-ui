@@ -26,6 +26,7 @@ interface UseInfiniteScrollingProps<
   baseQueryKey: string;
   taskName?: string;
   taskInstance?: string;
+  schemaId?: string;
 }
 
 export const useInfiniteScrolling = <
@@ -34,6 +35,7 @@ export const useInfiniteScrolling = <
   fetchDataFunction,
   taskName,
   taskInstance,
+  schemaId,
   baseQueryKey,
 }: UseInfiniteScrollingProps<T>) => {
   const [currentFilter, setCurrentFilter] = useState<FilterBy>(FilterBy.All);
@@ -56,6 +58,7 @@ export const useInfiniteScrolling = <
   const prevSearchTermTaskInstanceRef = useRef<string>();
   const prevSearchTermTaskNameExactMatchRef = useRef<boolean>();
   const prevSearchTermTaskInstanceExactMatchRef = useRef<boolean>();
+  const prevSchemaIdRef = useRef<string | undefined>();
 
   const queryClient = useQueryClient();
 
@@ -69,6 +72,7 @@ export const useInfiniteScrolling = <
       ...(endTime ? [ endTime ] : []),
       ...(taskName ? [taskName] : []),
       ...(taskInstance ? [taskInstance] : []),
+      ...(schemaId ? [schemaId] : []),
       searchTermTaskName,
       searchTermTaskInstance,
       taskNameExactMatch,
@@ -81,6 +85,7 @@ export const useInfiniteScrolling = <
       sortAsc,
       startTime, endTime, taskName,
       taskInstance,
+      schemaId,
       searchTermTaskName,
       searchTermTaskInstance,
       taskNameExactMatch,
@@ -102,6 +107,7 @@ export const useInfiniteScrolling = <
       const hasSearchTermTaskInstanceExactMatchChanged =
         prevSearchTermTaskInstanceExactMatchRef.current !==
         taskInstanceExactMatch;
+      const hasSchemaIdChanged = prevSchemaIdRef.current !== schemaId;
 
       const shouldRefresh =
         pageParam === 0 ||
@@ -111,7 +117,8 @@ export const useInfiniteScrolling = <
         hasSearchTermTaskNameChanged ||
         hasSearchTermTaskInstanceChanged ||
         hasSearchTermTaskNameExactMatchChanged ||
-        hasSearchTermTaskInstanceExactMatchChanged;
+        hasSearchTermTaskInstanceExactMatchChanged ||
+        hasSchemaIdChanged;
 
       if (
         hasFilterChanged ||
@@ -120,7 +127,8 @@ export const useInfiniteScrolling = <
         hasSearchTermTaskNameChanged ||
         hasSearchTermTaskInstanceChanged ||
         hasSearchTermTaskNameExactMatchChanged ||
-        hasSearchTermTaskInstanceExactMatchChanged
+        hasSearchTermTaskInstanceExactMatchChanged ||
+        hasSchemaIdChanged
       ) {
         queryClient.removeQueries(queryKey);
       }
@@ -132,6 +140,7 @@ export const useInfiniteScrolling = <
       prevSearchTermTaskInstanceRef.current = searchTermTaskInstance;
       prevSearchTermTaskNameExactMatchRef.current = taskNameExactMatch;
       prevSearchTermTaskInstanceExactMatchRef.current = taskInstanceExactMatch;
+      prevSchemaIdRef.current = schemaId;
 
       const params = {
         filter: currentFilter,
@@ -149,6 +158,7 @@ export const useInfiniteScrolling = <
         size: limit,
         ...(taskName ? { taskName } : {}),
         ...(taskInstance ? { taskId: taskInstance } : {}),
+        ...(schemaId ? { schemaId } : {}),
       };
 
       return fetchDataFunction(params);
@@ -161,6 +171,7 @@ export const useInfiniteScrolling = <
       searchTermTaskInstance,
       taskName,
       taskInstance,
+      schemaId,
       queryClient,
       queryKey,
       fetchDataFunction,

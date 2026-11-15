@@ -47,6 +47,7 @@ export const getTasks = async (
       'taskInstanceExactMatch',
       params.taskInstanceExactMatch.toString(),
     );
+  params.schemaId && queryParams.append('schemaId', params.schemaId);
 
   return apiGet<TasksResponse>(`/tasks/all?${queryParams}`);
 };

@@ -41,6 +41,7 @@ export const getLogs = async (
     );
   params.taskName && queryParams.append('taskName', params.taskName);
   params.taskId && queryParams.append('taskId', params.taskId);
+  params.schemaId && queryParams.append('schemaId', params.schemaId);
   params.taskNameExactMatch !== undefined &&
     queryParams.append(
       'taskNameExactMatch',

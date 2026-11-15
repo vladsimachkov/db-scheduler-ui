@@ -17,6 +17,7 @@ import {
   Checkbox,
   HStack,
   Input,
+  Select,
   Text,
   VStack,
   Button,
@@ -36,6 +37,7 @@ import { TaskDetailsRequestParams } from 'src/models/TaskRequestParams';
 import { useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDebouncedCallback } from 'src/hooks/useDebouncedCallback';
+import { Schema } from 'src/models/Schema';
 
 interface HeaderBarProps {
   params: TaskDetailsRequestParams;
@@ -51,6 +53,10 @@ interface HeaderBarProps {
   setTaskInstanceExactMatch: (exactMatch: boolean) => void;
   taskNameExactMatch: boolean;
   taskInstanceExactMatch: boolean;
+  // schema filter, only rendered when more than one schema is accessible
+  schemaOptions?: Schema[];
+  schemaId?: string;
+  onSchemaIdChange?: (schemaId: string) => void;
 }
 
 export const HeaderBar: React.FC<HeaderBarProps> = ({
@@ -64,6 +70,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   setTaskInstanceExactMatch,
   taskNameExactMatch,
   taskInstanceExactMatch,
+  schemaOptions,
+  schemaId,
+  onSchemaIdChange,
   params,
 }) => {
   const { t } = useTranslation();
@@ -197,6 +206,24 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         </Box>
       </Box>
       <Box alignSelf={'start'}>
+        {!isDetailsView && schemaOptions && schemaOptions.length > 1 && (
+          <Select
+            float={'left'}
+            mr={3}
+            w={'auto'}
+            maxW={'240px'}
+            aria-label={t('sql:schema')}
+            value={schemaId ?? ''}
+            onChange={(event) => onSchemaIdChange?.(event.target.value)}
+          >
+            <option value="">{t('sql:allSchemas')}</option>
+            {schemaOptions.map((schema) => (
+              <option key={schema.id} value={schema.id}>
+                {schema.name}
+              </option>
+            ))}
+          </Select>
+        )}
         <FilterBox
           currentFilter={currentFilter}
           setCurrentFilter={setCurrentFilter}
