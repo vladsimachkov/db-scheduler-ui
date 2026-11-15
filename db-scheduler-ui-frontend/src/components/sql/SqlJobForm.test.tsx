@@ -266,8 +266,30 @@ describe('SqlJobForm with a single accessible schema', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
+    // findByText already synchronizes with the guard having run
     expect(await screen.findByText(/must belong to the job's schema/)).toBeInTheDocument();
-    await waitFor(() => expect(updateJob).not.toHaveBeenCalled());
+    expect(updateJob).not.toHaveBeenCalled();
+  });
+
+  it('auto-fills the exact schema id when the list arrives late', async () => {
+    // a legacy job whose connection already belongs to the lone schema:
+    // the payload pins the auto-filled id, not just that some schema landed
+    const { rerender: resolveSchemas } = renderSingle(
+      { ...legacyJob, schemaId: null },
+      [inMain],
+      [],
+    );
+    resolveSchemas([schemas[0]]);
+    await waitFor(() =>
+      expect(screen.queryByLabelText('Schema')).not.toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(updateJob).toHaveBeenCalled());
+    expect(vi.mocked(updateJob).mock.calls[0][1]).toMatchObject({
+      schemaId: 's1',
+      connectionId: 'c1',
+    });
   });
 
   it('applies the auto-fill when the schema list arrives after the modal opened', async () => {
