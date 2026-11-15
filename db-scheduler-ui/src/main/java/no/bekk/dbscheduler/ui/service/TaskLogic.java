@@ -154,9 +154,10 @@ public class TaskLogic {
         caching.getExecutionsFromCacheOrDB(params.isRefresh(), scheduler);
 
     List<TaskModel> tasks = TaskMapper.mapAllExecutionsToTaskModelUngrouped(executions);
-    tasks = TaskMapper.applyDisplays(tasks, displayResolvers);
-
+    // resolve only after the visibility filter: hidden executions never reach the client, so
+    // resolvers should not be consulted (nor their output shipped) for them
     tasks = filterVisible(tasks, params.getSchemaId());
+    tasks = TaskMapper.applyDisplays(tasks, displayResolvers);
     tasks =
         QueryUtils.searchByTaskName(
             tasks, params.getSearchTermTaskName(), params.isTaskNameExactMatch());
@@ -195,8 +196,8 @@ public class TaskLogic {
                       return task.getTaskName().equals(params.getTaskName());
                     })
                 .collect(Collectors.toList());
-    tasks = TaskMapper.applyDisplays(tasks, displayResolvers);
     tasks = filterVisible(tasks, params.getSchemaId());
+    tasks = TaskMapper.applyDisplays(tasks, displayResolvers);
     if (tasks.isEmpty()) {
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND,
