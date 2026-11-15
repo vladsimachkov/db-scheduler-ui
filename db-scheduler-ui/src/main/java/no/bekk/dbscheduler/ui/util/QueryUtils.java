@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import no.bekk.dbscheduler.ui.model.TaskDisplay;
 import no.bekk.dbscheduler.ui.model.TaskModel;
 import no.bekk.dbscheduler.ui.model.TaskRequestParams;
 import no.bekk.dbscheduler.ui.model.TaskRequestParams.TaskFilter;
@@ -128,10 +130,17 @@ public class QueryUtils {
 
               boolean isTermPresent;
               if (isTaskNameSearch) {
-                isTermPresent =
-                    isExactMatch
-                        ? task.getTaskName().equalsIgnoreCase(lowerCaseTerm)
-                        : task.getTaskName().toLowerCase().contains(lowerCaseTerm);
+                isTermPresent = matchesTerm(task.getTaskName(), lowerCaseTerm, isExactMatch);
+                if (!isTermPresent && task.getDisplays() != null) {
+                  // the display name (e.g. a sql job's own name) is what the row shows, so the
+                  // name search has to match it too — any instance of the group can match
+                  isTermPresent =
+                      task.getDisplays().stream()
+                          .filter(Objects::nonNull)
+                          .map(TaskDisplay::displayName)
+                          .filter(Objects::nonNull)
+                          .anyMatch(name -> matchesTerm(name, lowerCaseTerm, isExactMatch));
+                }
               } else {
                 isTermPresent =
                     task.getTaskInstance().stream()
@@ -146,6 +155,12 @@ public class QueryUtils {
               return isTermPresent;
             })
         .collect(Collectors.toList());
+  }
+
+  private static boolean matchesTerm(String value, String lowerCaseTerm, boolean isExactMatch) {
+    return isExactMatch
+        ? value.equalsIgnoreCase(lowerCaseTerm)
+        : value.toLowerCase().contains(lowerCaseTerm);
   }
 
   public static String logSearchCondition(

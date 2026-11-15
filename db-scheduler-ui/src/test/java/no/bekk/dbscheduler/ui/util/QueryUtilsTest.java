@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
+import no.bekk.dbscheduler.ui.model.TaskDisplay;
 import no.bekk.dbscheduler.ui.model.TaskModel;
 import no.bekk.dbscheduler.ui.model.TaskRequestParams.TaskFilter;
 import no.bekk.dbscheduler.ui.model.TaskRequestParams.TaskSort;
@@ -170,5 +171,34 @@ class QueryUtilsTest {
         null,
         1,
         null);
+  }
+
+  // --- Search by display name ---
+
+  @Test
+  void searchByTaskName_matchesDisplayNameOfSqlJobLikeTask() {
+    TaskModel job = task("sql-script-task", false, 0);
+    job.setDisplays(List.of(new TaskDisplay("Nightly Report", "s1")));
+
+    assertThat(QueryUtils.searchByTaskName(List.of(job), "nightly", false)).hasSize(1);
+    assertThat(QueryUtils.searchByTaskName(List.of(job), "nightly report", true)).hasSize(1);
+    assertThat(QueryUtils.searchByTaskName(List.of(job), "nope", false)).isEmpty();
+  }
+
+  @Test
+  void searchByTaskName_anyGroupMemberDisplayNameMatches() {
+    TaskModel group = task("sql-script-task", false, 0);
+    group.setDisplays(
+        Arrays.asList(new TaskDisplay("hourly", null), new TaskDisplay("nightly", null)));
+
+    assertThat(QueryUtils.searchByTaskName(List.of(group), "nightly", false)).hasSize(1);
+  }
+
+  @Test
+  void searchByTaskName_nullDisplaysBehavesAsBefore() {
+    List<TaskModel> tasks = List.of(task("plain-task", false, 0));
+
+    assertThat(QueryUtils.searchByTaskName(tasks, "plain", false)).hasSize(1);
+    assertThat(QueryUtils.searchByTaskName(tasks, "report", false)).isEmpty();
   }
 }
