@@ -206,7 +206,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
         </Box>
       </Box>
       <Box alignSelf={'start'}>
-        {!isDetailsView && schemaOptions && schemaOptions.length > 1 && (
+        {/* a single-task history view (taskName via location.state) is details too:
+            filtering it by schema would empty it for host tasks */}
+        {!isDetailsView && !taskName && schemaOptions && schemaOptions.length > 1 && (
           <Select
             float={'left'}
             mr={3}
