@@ -56,11 +56,12 @@ public final class LogsTable {
     jdbc.update(
         "insert into "
             + NAME
-            + " (id, task_name, task_instance, picked_by, time_started, time_finished,"
-            + " succeeded, duration_ms) values (?, ?, ?, ?, ?, ?, ?, ?)",
+            + " (id, task_name, task_instance, task_data, picked_by, time_started, time_finished,"
+            + " succeeded, duration_ms) values (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         ID_SEQ.incrementAndGet(),
         row.taskName,
         row.taskInstance,
+        row.taskData,
         "test",
         ts,
         ts,

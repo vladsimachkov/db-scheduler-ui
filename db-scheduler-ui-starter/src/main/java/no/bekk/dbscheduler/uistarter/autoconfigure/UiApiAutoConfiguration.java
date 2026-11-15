@@ -127,14 +127,16 @@ public class UiApiAutoConfiguration {
       DbSchedulerCustomizer customizer,
       DbSchedulerUiProperties properties,
       @Value("${db-scheduler-ui.log.table-name:scheduled_execution_logs}") String logTableName,
-      @Value("${db-scheduler-ui.log-limit:0}") int logLimit) {
+      @Value("${db-scheduler-ui.log-limit:0}") int logLimit,
+      ObjectProvider<ExecutionVisibilityFilter> visibilityFilter) {
     return new LogLogic(
         customizer.dataSource().orElse(dataSource),
         customizer.serializer().orElse(Serializer.DEFAULT_JAVA_SERIALIZER),
         caching,
         properties.taskData(),
         logTableName,
-        logLimit);
+        logLimit,
+        visibilityFilter.getIfAvailable());
   }
 
   @Bean

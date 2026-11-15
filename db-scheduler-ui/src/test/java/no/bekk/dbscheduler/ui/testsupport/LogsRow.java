@@ -24,6 +24,7 @@ public final class LogsRow {
 
   String taskName;
   String taskInstance;
+  byte[] taskData;
   boolean succeeded;
   Instant time;
 

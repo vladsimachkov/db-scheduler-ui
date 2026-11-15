@@ -23,6 +23,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.sql.DataSource;
 import lombok.RequiredArgsConstructor;
 import no.bekk.dbscheduler.ui.model.GetLogsResponse;
@@ -47,6 +49,8 @@ public class LogLogic {
   private final String logTableName;
   private final String databaseProductName;
   private final int logLimit;
+  private final boolean showData;
+  private final ExecutionVisibilityFilter visibility;
 
   public LogLogic(
       DataSource dataSource,
@@ -55,6 +59,19 @@ public class LogLogic {
       boolean showData,
       String logTableName,
       int logLimit) {
+    this(dataSource, serializer, caching, showData, logTableName, logLimit, null);
+  }
+
+  public LogLogic(
+      DataSource dataSource,
+      Serializer serializer,
+      Caching caching,
+      boolean showData,
+      String logTableName,
+      int logLimit,
+      ExecutionVisibilityFilter visibility) {
+    this.showData = showData;
+    this.visibility = visibility;
     try (Connection connection = dataSource.getConnection()) {
       DatabaseMetaData metaData = connection.getMetaData();
       databaseProductName = metaData.getDatabaseProductName();
@@ -69,12 +86,50 @@ public class LogLogic {
     this.logLimit = logLimit;
     this.logModelRowMapper =
         new LogModelRowMapper(
-            showData, serializer == null ? Serializer.DEFAULT_JAVA_SERIALIZER : serializer);
+            showData,
+            serializer == null ? Serializer.DEFAULT_JAVA_SERIALIZER : serializer,
+            taskName -> visibility != null && visibility.needsTaskData(taskName));
+  }
+
+  private static LogModel withoutTaskData(LogModel log) {
+    return new LogModel(
+        log.getId(),
+        log.getTaskName(),
+        log.getTaskInstance(),
+        null,
+        log.getTimeStarted(),
+        log.getTimeFinished(),
+        log.isSucceeded(),
+        log.getDurationMs(),
+        log.getExceptionClass(),
+        log.getExceptionMessage(),
+        log.getExceptionStackTrace());
+  }
+
+  private List<LogModel> filterVisible(List<LogModel> logs, String schemaId) {
+    if (visibility == null) {
+      return logs;
+    }
+    return logs.stream()
+        .filter(
+            log ->
+                visibility.visible(
+                    log.getTaskName(), log.getTaskInstance(), log.getTaskData(), schemaId))
+        .collect(Collectors.toList());
   }
 
   public GetLogsResponse getLogs(TaskDetailsRequestParams requestParams) {
     List<LogModel> logs =
         caching.getLogsFromCacheOrDB(requestParams.isRefresh(), this, requestParams);
+    // The log cache is shared across users, so it stays unfiltered; visibility is applied per
+    // request here, after the cache read and before pagination.
+    logs = filterVisible(logs, requestParams.getSchemaId());
+    if (!showData && visibility != null) {
+      // The visibility filter may have needed the data (forced deserialization), but the
+      // showData=false contract still forbids sending it to the client. Copy — the originals
+      // live in the shared cache and later requests' filterVisible needs their data.
+      logs = logs.stream().map(LogLogic::withoutTaskData).collect(Collectors.toList());
+    }
     List<LogModel> pagedLogs =
         QueryUtils.paginate(logs, requestParams.getPageNumber(), requestParams.getSize());
 
@@ -83,7 +138,8 @@ public class LogLogic {
   }
 
   public LogPollResponse pollLogs(TaskDetailsRequestParams requestParams) {
-    List<LogModel> logsFromDB = getLogsDirectlyFromDB(requestParams);
+    List<LogModel> logsFromDB =
+        filterVisible(getLogsDirectlyFromDB(requestParams), requestParams.getSchemaId());
 
     long newFailures =
         logsFromDB.stream()
@@ -238,20 +294,33 @@ public class LogLogic {
 
     private final boolean showData;
     private final Serializer serializer;
+    private final Predicate<String> forceDeserialize;
 
     @Override
     public LogModel mapRow(ResultSet rs, int rowNum) throws SQLException {
+      String taskName = rs.getString("task_name");
       Object taskData = null;
-      if (showData) {
+      // A visibility filter may need the data even when the UI hides task data; on that path a
+      // corrupt blob must not break the page, so deserialization failures leave the data null.
+      boolean forced = !showData && forceDeserialize.test(taskName);
+      if (showData || forced) {
         final byte[] bytes = rs.getBytes("task_data");
         if (bytes != null) {
-          taskData = serializer.deserialize(Object.class, bytes);
+          if (forced) {
+            try {
+              taskData = serializer.deserialize(Object.class, bytes);
+            } catch (Exception e) {
+              taskData = null;
+            }
+          } else {
+            taskData = serializer.deserialize(Object.class, bytes);
+          }
         }
       }
 
       return new LogModel(
           rs.getLong("id"),
-          rs.getString("task_name"),
+          taskName,
           rs.getString("task_instance"),
           taskData,
           rs.getTimestamp("time_started").toInstant(),
