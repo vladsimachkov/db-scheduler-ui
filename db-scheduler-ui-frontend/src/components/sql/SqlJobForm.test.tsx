@@ -104,7 +104,7 @@ function connection(id: string, name: string, schemaId: string): SqlConnection {
 const inMain = connection('c1', 'In Main', 's1');
 const inOther = connection('c2', 'In Other', 's2');
 
-function renderForm(connections: SqlConnection[]) {
+function renderForm(connections: SqlConnection[], initial?: SqlJob) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
@@ -116,6 +116,7 @@ function renderForm(connections: SqlConnection[]) {
           onClose={vi.fn()}
           connections={connections}
           schemas={schemas}
+          initial={initial}
         />
       </QueryClientProvider>
     </ChakraProvider>,
@@ -158,6 +159,16 @@ describe('SqlJobForm with the users feature on', () => {
     expect(connectionSelect()).toHaveValue('');
   });
 
+  it('drops the job\'s own connection when the schema moves off it', () => {
+    // a job homed to s1/c1: keeping the job's own connection listed is an
+    // exception for schema-less legacy connections only, not a blanket one
+    renderForm([inMain, inOther], { ...legacyJob, schemaId: 's1', connectionId: 'c1' });
+    expect(connectionOptionNames()).toEqual(['In Main']);
+
+    fireEvent.change(schemaSelect(), { target: { value: 's2' } });
+    expect(connectionOptionNames()).toEqual(['In Other']);
+  });
+
   it('blocks saving until a schema is picked', async () => {
     renderForm([inMain]);
     fireEvent.change(screen.getByLabelText('Name'), {
@@ -191,23 +202,29 @@ const legacyJob: SqlJob = {
 };
 
 describe('SqlJobForm with a single accessible schema', () => {
-  function renderSingle(initial?: SqlJob, connections: SqlConnection[] = [inMain]) {
+  function renderSingle(
+    initial?: SqlJob,
+    connections: SqlConnection[] = [inMain],
+    initialSchemas: Schema[] = [schemas[0]],
+  ) {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
     });
-    render(
+    const tree = (list: Schema[]) => (
       <ChakraProvider>
         <QueryClientProvider client={queryClient}>
           <SqlJobForm
             isOpen
             onClose={vi.fn()}
             connections={connections}
-            schemas={[schemas[0]]}
+            schemas={list}
             initial={initial}
           />
         </QueryClientProvider>
-      </ChakraProvider>,
+      </ChakraProvider>
     );
+    const view = render(tree(initialSchemas));
+    return { rerender: (list: Schema[]) => view.rerender(tree(list)) };
   }
 
   it('hides the picker and preselects the only schema for the connection filter', () => {
@@ -240,5 +257,28 @@ describe('SqlJobForm with a single accessible schema', () => {
     expect(screen.queryByLabelText('Schema')).not.toBeInTheDocument();
     expect(connectionSelect()).toHaveValue('c0');
     expect(within(connectionSelect()).getByRole('option', { name: 'Legacy' })).toBeInTheDocument();
+  });
+
+  it('applies the auto-fill when the schema list arrives after the modal opened', async () => {
+    const legacyConn: SqlConnection = { ...inMain, id: 'c0', name: 'Legacy', schemaId: null };
+    const job = { ...legacyJob, connectionId: 'c0', connectionName: 'Legacy' };
+    // the /sql-schemas query is still pending at mount: the picker is visible
+    const { rerender: resolveSchemas } = renderSingle(job, [legacyConn], []);
+    expect(screen.getByLabelText('Schema')).toBeInTheDocument();
+
+    resolveSchemas([schemas[0]]);
+    await waitFor(() =>
+      expect(screen.queryByLabelText('Schema')).not.toBeInTheDocument(),
+    );
+    // the late auto-fill must not wipe the job's own connection (onSchemaChange
+    // would have cleared it as schema-mismatched)
+    expect(connectionSelect()).toHaveValue('c0');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(updateJob).toHaveBeenCalled());
+    expect(vi.mocked(updateJob).mock.calls[0][1]).toMatchObject({
+      schemaId: 's1',
+      connectionId: 'c0',
+    });
   });
 });

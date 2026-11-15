@@ -297,12 +297,14 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
   const usersEnabled = getUsersEnabled();
   const selectedSchema = watch('schemaId');
   // a job's connection must belong to the job's schema, so offer only matching
-  // ones — but always keep the job's own connection visible, even when it does
-  // not match (a legacy schema-less connection must not render as a blank field)
+  // ones — plus the job's own connection while it has no schema at all, so a
+  // legacy schema-less connection does not render as a blank field
   const visibleConnections =
     usersEnabled && selectedSchema
       ? connections.filter(
-          (c) => c.schemaId === selectedSchema || c.id === initial?.connectionId,
+          (c) =>
+            c.schemaId === selectedSchema ||
+            (c.id === initial?.connectionId && c.schemaId == null),
         )
       : connections;
 
@@ -320,9 +322,19 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
 
   // The schema list may arrive after the modal was opened — apply the auto-fill
   // with a targeted setValue so a late response cannot reset in-progress input.
+  // The job's own connection survives (it is always listed); only a connection
+  // the user picked while no schema was known must match the arriving schema.
   useEffect(() => {
     if (isOpen && singleSchemaId && !getValues('schemaId')) {
-      onSchemaChange(singleSchemaId);
+      setValue('schemaId', singleSchemaId);
+      const current = getValues('connectionId');
+      if (
+        current &&
+        current !== initial?.connectionId &&
+        !connections.some((c) => c.id === current && c.schemaId === singleSchemaId)
+      ) {
+        setValue('connectionId', '');
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, singleSchemaId]);
