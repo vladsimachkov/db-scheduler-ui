@@ -53,7 +53,7 @@ import {
   listJobs,
   runJobNow,
 } from 'src/services/sqlJobs';
-import { SCHEMAS_QUERY_KEY, listSchemas } from 'src/services/schemas';
+import { useSchemas } from 'src/hooks/useSchemas';
 import { cronDescription } from 'src/utils/cronDescription';
 import { dateFormatText } from 'src/utils/dateFormatText';
 import { getReadonly, getUsersEnabled } from 'src/utils/config';
@@ -79,12 +79,7 @@ const SqlJobsPage: React.FC = () => {
     queryKey: [CONNECTIONS_QUERY_KEY],
     queryFn: listConnections,
   });
-  const { data: schemas, isError: schemasError } = useQuery({
-    queryKey: [SCHEMAS_QUERY_KEY],
-    queryFn: listSchemas,
-    enabled: usersEnabled,
-    staleTime: 60_000,
-  });
+  const { data: schemas, isError: schemasError } = useSchemas();
   const visibleJobs = schemaFilter
     ? (jobs ?? []).filter((job) => job.schemaId === schemaFilter)
     : jobs;

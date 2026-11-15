@@ -32,7 +32,10 @@ import {
 import { listUsers } from 'src/services/users';
 
 // config.ts fails safe to readOnly when /config is unreachable — in tests that hides every button
-vi.mock('src/utils/config', () => ({ getReadonly: () => false }));
+vi.mock('src/utils/config', () => ({
+  getReadonly: () => false,
+  getUsersEnabled: () => true,
+}));
 vi.mock('src/services/schemas', () => ({
   SCHEMAS_QUERY_KEY: 'sql-schemas',
   GRANTS_QUERY_KEY: 'schema-grants',

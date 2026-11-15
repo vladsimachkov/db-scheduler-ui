@@ -33,7 +33,7 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
@@ -53,7 +53,7 @@ import {
   testConnection,
   updateConnection,
 } from 'src/services/sqlConnections';
-import { SCHEMAS_QUERY_KEY, listSchemas } from 'src/services/schemas';
+import { useSchemas } from 'src/hooks/useSchemas';
 import { getUsersEnabled } from 'src/utils/config';
 
 const DIALECTS: SqlDialect[] = [
@@ -109,12 +109,7 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
 }) => {
   const { t } = useTranslation('connections');
   const usersEnabled = getUsersEnabled();
-  const { data: schemas, isError: schemasError } = useQuery({
-    queryKey: [SCHEMAS_QUERY_KEY],
-    queryFn: listSchemas,
-    enabled: usersEnabled,
-    staleTime: 60_000,
-  });
+  const { data: schemas, isError: schemasError } = useSchemas();
   const toast = useToast();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);

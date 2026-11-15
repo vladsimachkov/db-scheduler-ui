@@ -57,10 +57,10 @@ import {
   deleteSchema,
   grantAccess,
   listGrants,
-  listSchemas,
   revokeAccess,
   updateSchema,
 } from 'src/services/schemas';
+import { useSchemas } from 'src/hooks/useSchemas';
 import { USERS_QUERY_KEY, listUsers } from 'src/services/users';
 import { getReadonly } from 'src/utils/config';
 
@@ -79,10 +79,7 @@ const AdminSchemasPage: React.FC = () => {
   const [grantCandidate, setGrantCandidate] = useState('');
   const cancelRef = useRef(null);
 
-  const { data: schemas } = useQuery({
-    queryKey: [SCHEMAS_QUERY_KEY],
-    queryFn: listSchemas,
-  });
+  const { data: schemas } = useSchemas();
   // only fetched while the grant panel is open
   const { data: users } = useQuery({
     queryKey: [USERS_QUERY_KEY],
