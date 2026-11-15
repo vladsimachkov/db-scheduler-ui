@@ -129,6 +129,8 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     control,
     watch,
     reset,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm<ConnectionFormValues>({
     resolver: zodResolver(connectionFormSchema(usersEnabled)),
@@ -144,10 +146,17 @@ const ConnectionForm: React.FC<ConnectionFormProps> = ({
     }
     // Keyed on the stable id, not the object: a refetch would otherwise wipe
     // in-progress edits with a fresh-but-identical SqlConnection instance.
-    // singleSchemaId is in the deps so the auto-fill lands if the schema list
-    // arrives after the modal was opened.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, initial?.id, singleSchemaId]);
+  }, [isOpen, initial?.id]);
+
+  // The schema list may arrive after the modal was opened — apply the auto-fill
+  // with a targeted setValue so a late response cannot reset in-progress input.
+  useEffect(() => {
+    if (isOpen && singleSchemaId && !getValues('schemaId')) {
+      setValue('schemaId', singleSchemaId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, singleSchemaId]);
 
   const values = watch();
   const clearPassword = values.clearPassword;
