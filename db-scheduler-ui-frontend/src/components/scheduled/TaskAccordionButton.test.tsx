@@ -106,6 +106,13 @@ describe('TaskAccordionButton display name', () => {
       screen.getByText('550e8400-e29b-41d4-a716-446655440000'),
     ).toBeInTheDocument();
   });
+
+  it('truncates a long display name like the instance id before it', () => {
+    const longName = 'x'.repeat(50);
+    renderButton({ displays: [{ displayName: longName, schemaId: null }] });
+
+    expect(screen.getByText(`${'x'.repeat(40)}...`)).toBeInTheDocument();
+  });
 });
 
 describe('TaskAccordionButton schema column', () => {

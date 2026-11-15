@@ -186,4 +186,21 @@ class TaskLogicDisplayTest {
     assertThat(sqlTask.getTaskData()).doesNotContain((Object) "nightly");
     assertThat(sqlTask.getDisplays()).containsExactly(new TaskDisplay("job nightly", "schema-1"));
   }
+
+  private static TaskRequestParams searchParams(String term, boolean exact) {
+    return new TaskRequestParams(
+        null, null, null, null, null, term, null, exact, null, null, null, null, null);
+  }
+
+  @Test
+  void getAllTasks_searchTermMatchesResolvedDisplayName() {
+    Scheduler scheduler = schedulerWith(execution("sql-script-task", "j1", "nightly"));
+    TaskLogic taskLogic =
+        new TaskLogic(scheduler, new Caching(), true, null, List.of(sqlJobLikeResolver()));
+
+    // the row shows "job nightly" instead of the UUID — the search box has to find it by that label
+    assertThat(taskLogic.getAllTasks(searchParams("job nightly", true)).getItems()).hasSize(1);
+    assertThat(taskLogic.getAllTasks(searchParams("nightly", false)).getItems()).hasSize(1);
+    assertThat(taskLogic.getAllTasks(searchParams("zzz", false)).getItems()).isEmpty();
+  }
 }
