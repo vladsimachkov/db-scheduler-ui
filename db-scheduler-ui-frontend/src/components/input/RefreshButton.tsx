@@ -57,6 +57,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
       params.searchTermTaskInstance,
       params.taskInstanceExactMatch,
       params.taskNameExactMatch,
+      params.schemaId,
     ],
     () =>
       pollFunction({
@@ -71,6 +72,7 @@ export const RefreshButton: React.FC<RefreshButtonProps> = ({
         searchTermTaskInstance: params.searchTermTaskInstance,
         taskInstanceExactMatch: params.taskInstanceExactMatch,
         taskNameExactMatch: params.taskNameExactMatch,
+        schemaId: params.schemaId,
       }),
   );
 
