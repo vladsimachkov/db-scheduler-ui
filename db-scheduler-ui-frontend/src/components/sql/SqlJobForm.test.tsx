@@ -259,6 +259,17 @@ describe('SqlJobForm with a single accessible schema', () => {
     expect(within(connectionSelect()).getByRole('option', { name: 'Legacy' })).toBeInTheDocument();
   });
 
+  it('blocks saving a legacy job whose connection has no schema', async () => {
+    // the backend would answer 400 (same-schema rule) — the form says it first
+    const legacyConn: SqlConnection = { ...inMain, id: 'c0', name: 'Legacy', schemaId: null };
+    renderSingle({ ...legacyJob, connectionId: 'c0', connectionName: 'Legacy' }, [legacyConn]);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(await screen.findByText(/must belong to the job's schema/)).toBeInTheDocument();
+    await waitFor(() => expect(updateJob).not.toHaveBeenCalled());
+  });
+
   it('applies the auto-fill when the schema list arrives after the modal opened', async () => {
     const legacyConn: SqlConnection = { ...inMain, id: 'c0', name: 'Legacy', schemaId: null };
     const job = { ...legacyJob, connectionId: 'c0', connectionName: 'Legacy' };
@@ -274,11 +285,10 @@ describe('SqlJobForm with a single accessible schema', () => {
     // would have cleared it as schema-mismatched)
     expect(connectionSelect()).toHaveValue('c0');
 
+    // the hint on save proves both halves landed: schemaId auto-filled to s1
+    // and connectionId kept as the schema-less c0 (a doomed pair, blocked locally)
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(updateJob).toHaveBeenCalled());
-    expect(vi.mocked(updateJob).mock.calls[0][1]).toMatchObject({
-      schemaId: 's1',
-      connectionId: 'c0',
-    });
+    expect(await screen.findByText(/must belong to the job's schema/)).toBeInTheDocument();
+    expect(updateJob).not.toHaveBeenCalled();
   });
 });

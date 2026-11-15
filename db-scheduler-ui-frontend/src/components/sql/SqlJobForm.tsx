@@ -341,6 +341,17 @@ const SqlJobForm: React.FC<SqlJobFormProps> = ({
 
   const onSubmit = handleSubmit((values) => {
     setFormError(null);
+    // the backend enforces the same-schema rule with a 400 — say it up front
+    const connection = connections.find((c) => c.id === values.connectionId);
+    if (
+      usersEnabled &&
+      values.schemaId &&
+      connection &&
+      connection.schemaId !== values.schemaId
+    ) {
+      setFormError(t('connectionSchemaMismatch'));
+      return;
+    }
     save.mutate({
       name: values.name.trim(),
       description: values.description.trim() || undefined,

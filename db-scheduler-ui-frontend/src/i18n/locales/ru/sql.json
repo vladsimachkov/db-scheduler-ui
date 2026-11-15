@@ -11,6 +11,7 @@
   "description": "Описание",
   "connection": "Соединение",
   "connectionRequired": "Выберите соединение",
+  "connectionSchemaMismatch": "Соединение должно принадлежать схеме задания — сначала назначьте схему соединению",
   "scheduleType": "Расписание",
   "scheduleCron": "По cron-расписанию",
   "scheduleOnce": "Один раз",

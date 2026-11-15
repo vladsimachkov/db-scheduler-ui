@@ -11,6 +11,7 @@
   "description": "Description",
   "connection": "Connection",
   "connectionRequired": "Select a connection",
+  "connectionSchemaMismatch": "The connection must belong to the job's schema — assign a schema to the connection first",
   "scheduleType": "Schedule",
   "scheduleCron": "Cron schedule",
   "scheduleOnce": "One time",
